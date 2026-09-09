@@ -21,7 +21,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
   onOpenAdminLogin,
   paymentSettings,
 }) => {
-  const waClean = paymentSettings?.whatsappSupportNumber?.replace(/\D/g, '') || '923001234567';
+  const waClean = paymentSettings?.whatsappSupportNumber?.replace(/\D/g, '') || '923145338340';
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'ai' | 'creative' | 'streaming' | string>('all');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
@@ -43,7 +43,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
     },
     {
       q: 'What if a license key or subscription has an issue?',
-      a: 'Every single product from Insight Products comes backed by our 100% Replacement Warranty. If an account, domain, or key experiences any downtime or interruption during your purchased term, our human WhatsApp team will replace or restore it within minutes, or offer an immediate full refund.',
+      a: 'Every single product from Insight Products comes backed by our 100% Replacement Guarantee. If an account, domain, or key experiences any downtime or interruption during your purchased term, our human WhatsApp team will replace or restore it with a fresh key within minutes.',
     },
     {
       q: 'Are these shared accounts or private individual credentials?',
@@ -505,7 +505,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
                 <h4 className="font-headline font-bold text-xl">100% Replacement Guarantee</h4>
                 <p className="text-sm text-white/80 max-w-xl">
                   If your subscription stops functioning at any time within your validity period, we
-                  replace it or issue a prompt refund. Full accountability guaranteed.
+                  replace it immediately with fresh verified credentials. Full replacement guarantee.
                 </p>
               </div>
             </div>

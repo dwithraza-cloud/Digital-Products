@@ -92,6 +92,7 @@ export interface CustomerDossier {
 }
 
 export interface PaymentSettings {
+  enableBankTransfer?: boolean;
   bankName: string;
   bankSubtitle: string;
   accountTitle: string;
@@ -100,6 +101,10 @@ export interface PaymentSettings {
   walletName: string;
   walletNumber: string;
   walletTitle: string;
+  jazzcashNumber?: string;
+  jazzcashTitle?: string;
+  easypaisaNumber?: string;
+  easypaisaTitle?: string;
   whatsappSupportNumber: string;
   whatsappDisplay: string;
   ocrNoticeMinutes: string;

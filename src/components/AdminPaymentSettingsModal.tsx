@@ -20,7 +20,7 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
 
   if (!isOpen) return null;
 
-  const handleChange = (field: keyof PaymentSettings, value: string) => {
+  const handleChange = (field: keyof PaymentSettings, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -64,7 +64,7 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
               </span>
             </div>
             <p className="text-xs text-[#767586]">
-              Modify official bank accounts, mobile wallets, and WhatsApp dispatch numbers. Any change
+              Modify official JazzCash, Easypaisa, WhatsApp support, and Bank accounts. Any change
               saved here immediately updates the public checkout page for all customers.
             </p>
           </div>
@@ -84,133 +84,75 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
 
         {/* Form */}
         <form onSubmit={handleSave} className="space-y-6 text-xs">
-          {/* Section 1: Bank Account Details */}
-          <div className="p-5 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-headline font-bold text-sm text-[#0b1c30] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[#4648d4] text-[18px]">
-                  account_balance
-                </span>
-                Primary Bank Details (1-Link &amp; Escrow)
-              </h4>
-              <span className="text-[10px] text-[#767586] font-mono">SECTION 01</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="space-y-1">
-                <label className="font-bold text-[#0b1c30]">BANK NAME</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.bankName}
-                  onChange={(e) => handleChange('bankName', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none"
-                  placeholder="e.g. Meezan Bank Ltd"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-[#0b1c30]">BANK CATEGORY / SUBTITLE</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.bankSubtitle}
-                  onChange={(e) => handleChange('bankSubtitle', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none"
-                  placeholder="e.g. Islamic Banking Corporate Account"
-                />
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-[#0b1c30]">OFFICIAL ACCOUNT TITLE</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.accountTitle}
-                  onChange={(e) => handleChange('accountTitle', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-semibold"
-                  placeholder="e.g. Insight Products or Muhammad Ali"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-[#0b1c30]">FAST DEPOSIT ACCOUNT NUMBER</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.accountNumber}
-                  onChange={(e) => handleChange('accountNumber', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-mono"
-                  placeholder="e.g. 0102-0105-9238-1102"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-[#0b1c30]">FULL IBAN (1-LINK ACTIVE)</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.iban}
-                  onChange={(e) => handleChange('iban', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-mono"
-                  placeholder="e.g. PK42MEZN0001020105923811"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Mobile Wallet Details */}
-          <div className="p-5 rounded-2xl bg-[#fff7ed]/50 border border-[#fed7aa] space-y-4">
+          {/* Section 1: Mobile Wallet Rails (JazzCash & Easypaisa) */}
+          <div className="p-5 rounded-2xl bg-[#fff7ed]/60 border border-[#fed7aa] space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-headline font-bold text-sm text-[#0b1c30] flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[#ea580c] text-[18px]">
                   smartphone
                 </span>
-                Mobile Wallet Rails (JazzCash &amp; Easypaisa)
+                Active Mobile Wallet Rails (JazzCash &amp; Easypaisa)
               </h4>
-              <span className="text-[10px] text-[#767586] font-mono">SECTION 02</span>
+              <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
+                PRIMARY PUBLIC RAILS
+              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1">
-                <label className="font-bold text-[#0b1c30]">WALLET RAIL LABEL</label>
+                <label className="font-bold text-[#0b1c30]">JAZZCASH MOBILE NUMBER</label>
                 <input
                   type="text"
                   required
-                  value={formData.walletName}
-                  onChange={(e) => handleChange('walletName', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#fed7aa] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none"
-                  placeholder="e.g. JazzCash / Easypaisa Direct Transfer"
+                  value={formData.jazzcashNumber || formData.walletNumber || ''}
+                  onChange={(e) => {
+                    handleChange('jazzcashNumber', e.target.value);
+                    handleChange('walletNumber', e.target.value);
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#fed7aa] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-mono font-bold"
+                  placeholder="e.g. 03145338340"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-[#0b1c30]">WALLET ACCOUNT TITLE</label>
+                <label className="font-bold text-[#0b1c30]">JAZZCASH ACCOUNT TITLE</label>
                 <input
                   type="text"
                   required
-                  value={formData.walletTitle}
-                  onChange={(e) => handleChange('walletTitle', e.target.value)}
+                  value={formData.jazzcashTitle || formData.walletTitle || ''}
+                  onChange={(e) => handleChange('jazzcashTitle', e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-[#fed7aa] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-semibold"
-                  placeholder="e.g. Insight Pay or Your Name"
+                  placeholder="e.g. Insight Products"
                 />
               </div>
 
-              <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold text-[#0b1c30]">WALLET MOBILE NUMBER</label>
+              <div className="space-y-1">
+                <label className="font-bold text-[#0b1c30]">EASYPAISA MOBILE NUMBER</label>
                 <input
                   type="text"
                   required
-                  value={formData.walletNumber}
-                  onChange={(e) => handleChange('walletNumber', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#fed7aa] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-mono"
-                  placeholder="e.g. 0300-1234567 or 0312-9876543"
+                  value={formData.easypaisaNumber || formData.walletNumber || ''}
+                  onChange={(e) => handleChange('easypaisaNumber', e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#fed7aa] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-mono font-bold"
+                  placeholder="e.g. 03145338340"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#0b1c30]">EASYPAISA ACCOUNT TITLE</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.easypaisaTitle || formData.walletTitle || ''}
+                  onChange={(e) => handleChange('easypaisaTitle', e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#fed7aa] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-semibold"
+                  placeholder="e.g. Insight Products"
                 />
               </div>
             </div>
           </div>
 
-          {/* Section 3: WhatsApp Support & Dispatch */}
+          {/* Section 2: WhatsApp Support & Dispatch */}
           <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-headline font-bold text-sm text-[#0b1c30] flex items-center gap-1.5">
@@ -219,7 +161,7 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
                 </span>
                 Official WhatsApp Desk
               </h4>
-              <span className="text-[10px] text-[#767586] font-mono">SECTION 03</span>
+              <span className="text-[10px] text-[#767586] font-mono">SUPPORT DESK</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -233,7 +175,7 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
                   value={formData.whatsappSupportNumber}
                   onChange={(e) => handleChange('whatsappSupportNumber', e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-emerald-200 bg-white text-[#0b1c30] focus:ring-2 focus:ring-emerald-600 focus:outline-none font-mono"
-                  placeholder="e.g. +923001234567"
+                  placeholder="e.g. +923145338340"
                 />
                 <span className="text-[10px] text-[#767586] block">
                   Used for direct wa.me click-to-chat links.
@@ -247,12 +189,117 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
                   required
                   value={formData.whatsappDisplay}
                   onChange={(e) => handleChange('whatsappDisplay', e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-emerald-200 bg-white text-[#0b1c30] focus:ring-2 focus:ring-emerald-600 focus:outline-none"
-                  placeholder="e.g. +92 300 1234567"
+                  className="w-full px-3.5 py-2 rounded-xl border border-emerald-200 bg-white text-[#0b1c30] focus:ring-2 focus:ring-emerald-600 focus:outline-none font-bold"
+                  placeholder="e.g. 0314 5338340"
                 />
                 <span className="text-[10px] text-[#767586] block">
                   Displayed on website footer and support buttons.
                 </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Bank Account Details (Controlled by Enable/Disable toggle) */}
+          <div className="p-5 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#4648d4] text-[18px]">
+                  account_balance
+                </span>
+                <h4 className="font-headline font-bold text-sm text-[#0b1c30]">
+                  Bank Account Rail (1-Link &amp; Direct Deposit)
+                </h4>
+              </div>
+
+              {/* Bank Visibility Toggle Switch */}
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!formData.enableBankTransfer}
+                  onChange={(e) => handleChange('enableBankTransfer', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4648d4]"></div>
+                <span className="ml-2 text-xs font-bold text-[#0b1c30]">
+                  {formData.enableBankTransfer ? 'Visible on Site' : 'Hidden on Site'}
+                </span>
+              </label>
+            </div>
+
+            {!formData.enableBankTransfer ? (
+              <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-amber-600 text-[18px] shrink-0">
+                  visibility_off
+                </span>
+                <span>
+                  <strong>Bank Account is currently HIDDEN from real customers.</strong> It will not be shown on the public checkout until you enter your bank details and toggle the switch above ON.
+                </span>
+              </div>
+            ) : (
+              <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-emerald-600 text-[18px] shrink-0">
+                  visibility
+                </span>
+                <span>
+                  <strong>Bank Account is ENABLED on real customers checkout.</strong>
+                </span>
+              </div>
+            )}
+
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3.5 transition-opacity ${!formData.enableBankTransfer ? 'opacity-60' : 'opacity-100'}`}>
+              <div className="space-y-1">
+                <label className="font-bold text-[#0b1c30]">BANK NAME</label>
+                <input
+                  type="text"
+                  value={formData.bankName}
+                  onChange={(e) => handleChange('bankName', e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none"
+                  placeholder="e.g. Meezan Bank Ltd"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#0b1c30]">BANK CATEGORY / SUBTITLE</label>
+                <input
+                  type="text"
+                  value={formData.bankSubtitle}
+                  onChange={(e) => handleChange('bankSubtitle', e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none"
+                  placeholder="e.g. Islamic Banking Corporate Account"
+                />
+              </div>
+
+              <div className="space-y-1 sm:col-span-2">
+                <label className="font-bold text-[#0b1c30]">OFFICIAL ACCOUNT TITLE</label>
+                <input
+                  type="text"
+                  value={formData.accountTitle}
+                  onChange={(e) => handleChange('accountTitle', e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-semibold"
+                  placeholder="e.g. Insight Products"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#0b1c30]">FAST DEPOSIT ACCOUNT NUMBER</label>
+                <input
+                  type="text"
+                  value={formData.accountNumber}
+                  onChange={(e) => handleChange('accountNumber', e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-mono"
+                  placeholder="e.g. 0102-0105-9238-1102"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#0b1c30]">FULL IBAN (1-LINK ACTIVE)</label>
+                <input
+                  type="text"
+                  value={formData.iban}
+                  onChange={(e) => handleChange('iban', e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none font-mono"
+                  placeholder="e.g. PK42MEZN0001020105923811"
+                />
               </div>
             </div>
           </div>
@@ -264,20 +311,33 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
                 <span className="material-symbols-outlined text-[16px]">visibility</span>
                 Live Customer Checkout Preview
               </span>
-              <span className="text-[10px] text-gray-400 font-mono">Real-time preview</span>
+              <span className="text-[10px] text-gray-400 font-mono">Real-time sync</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-white/10 p-3 rounded-xl">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-white/10 p-3 rounded-xl">
               <div>
-                <span className="text-gray-400 block text-[10px]">BANK PREVIEW</span>
-                <span className="font-bold block text-white">{formData.bankName}</span>
-                <span className="font-mono text-emerald-300 text-[11px] block">{formData.accountNumber}</span>
-                <span className="text-[10px] text-gray-300">Title: {formData.accountTitle}</span>
+                <span className="text-gray-400 block text-[10px]">JAZZCASH PREVIEW</span>
+                <span className="font-mono font-bold text-red-400 text-[12px] block">
+                  {formData.jazzcashNumber || formData.walletNumber || '03145338340'}
+                </span>
+                <span className="text-[10px] text-gray-300">Title: {formData.jazzcashTitle || formData.walletTitle || 'Insight Products'}</span>
               </div>
               <div>
-                <span className="text-gray-400 block text-[10px]">WALLET PREVIEW</span>
-                <span className="font-bold block text-white">{formData.walletName}</span>
-                <span className="font-mono text-amber-300 text-[11px] block">{formData.walletNumber}</span>
-                <span className="text-[10px] text-gray-300">Title: {formData.walletTitle}</span>
+                <span className="text-gray-400 block text-[10px]">EASYPAISA PREVIEW</span>
+                <span className="font-mono font-bold text-emerald-400 text-[12px] block">
+                  {formData.easypaisaNumber || formData.walletNumber || '03145338340'}
+                </span>
+                <span className="text-[10px] text-gray-300">Title: {formData.easypaisaTitle || formData.walletTitle || 'Insight Products'}</span>
+              </div>
+              <div>
+                <span className="text-gray-400 block text-[10px]">BANK ACCOUNT STATUS</span>
+                {formData.enableBankTransfer && formData.accountNumber ? (
+                  <>
+                    <span className="font-bold text-emerald-300 text-[11px] block">{formData.bankName}</span>
+                    <span className="font-mono text-gray-200 text-[10px] block">{formData.accountNumber}</span>
+                  </>
+                ) : (
+                  <span className="text-amber-300 text-[11px] font-bold block">🔒 Hidden from Public</span>
+                )}
               </div>
             </div>
           </div>

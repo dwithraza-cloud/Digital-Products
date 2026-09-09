@@ -597,16 +597,21 @@ export const CUSTOMER_DOSSIERS: Record<string, CustomerDossier> = {
 };
 
 export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
+  enableBankTransfer: false, // Hidden until user fills in bank details and enables it
   bankName: 'Meezan Bank Ltd',
-  bankSubtitle: 'Islamic Banking Corporate Account',
+  bankSubtitle: 'Direct Bank Account (Currently Inactive)',
   accountTitle: 'Insight Products',
-  accountNumber: '0102-0105-9238-1102',
-  iban: 'PK42MEZN0001020105923811',
-  walletName: 'JazzCash / Easypaisa Direct Transfer',
-  walletNumber: '0300-1234567',
-  walletTitle: 'Insight Pay',
-  whatsappSupportNumber: '+923001234567',
-  whatsappDisplay: '+92 300 1234567',
-  ocrNoticeMinutes: '90 Sec Average',
+  accountNumber: '',
+  iban: '',
+  walletName: 'JazzCash & Easypaisa Mobile Account',
+  walletNumber: '03145338340',
+  walletTitle: 'Insight Products',
+  jazzcashNumber: '03145338340',
+  jazzcashTitle: 'Insight Products',
+  easypaisaNumber: '03145338340',
+  easypaisaTitle: 'Insight Products',
+  whatsappSupportNumber: '+923145338340',
+  whatsappDisplay: '0314 5338340',
+  ocrNoticeMinutes: 'Instant Transfer',
 };
 

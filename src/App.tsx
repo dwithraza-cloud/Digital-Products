@@ -86,7 +86,14 @@ export default function App() {
     const saved = localStorage.getItem('insight_payment_settings');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // If old placeholder number or unconfigured bank setting exists, upgrade gracefully
+        if (parsed.walletNumber === '0300-1234567' || !parsed.walletNumber || parsed.enableBankTransfer === undefined) {
+          const merged = { ...DEFAULT_PAYMENT_SETTINGS, ...parsed, enableBankTransfer: parsed.enableBankTransfer ?? false, walletNumber: parsed.walletNumber === '0300-1234567' ? '03145338340' : parsed.walletNumber, whatsappSupportNumber: parsed.whatsappSupportNumber === '+923001234567' ? '+923145338340' : parsed.whatsappSupportNumber, whatsappDisplay: parsed.whatsappDisplay === '+92 300 1234567' ? '0314 5338340' : parsed.whatsappDisplay };
+          localStorage.setItem('insight_payment_settings', JSON.stringify(merged));
+          return merged;
+        }
+        return parsed;
       } catch {
         return DEFAULT_PAYMENT_SETTINGS;
       }

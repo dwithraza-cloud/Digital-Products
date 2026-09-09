@@ -14,8 +14,8 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenAdminLogin,
   paymentSettings,
 }) => {
-  const waNumberClean = paymentSettings?.whatsappSupportNumber?.replace(/\D/g, '') || '923001234567';
-  const waDisplay = paymentSettings?.whatsappDisplay || '+92 300 1234567';
+  const waNumberClean = paymentSettings?.whatsappSupportNumber?.replace(/\D/g, '') || '923145338340';
+  const waDisplay = paymentSettings?.whatsappDisplay || '0314 5338340';
   return (
     <footer className="w-full border-t border-[#dce9ff] bg-[#eff4ff] text-[#464554] mt-20">
       <div className="max-w-[1280px] mx-auto px-5 lg:px-10 py-16">

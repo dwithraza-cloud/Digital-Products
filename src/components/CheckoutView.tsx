@@ -33,7 +33,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
   const [email, setEmail] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [city, setCity] = useState('Lahore');
-  const [selectedRail, setSelectedRail] = useState<Order['paymentRail']>('Meezan Bank');
+  const [selectedRail, setSelectedRail] = useState<Order['paymentRail']>('JazzCash Retail');
 
   // Screenshot Upload States (Mandatory)
   const [receiptAttached, setReceiptAttached] = useState(false);
@@ -622,19 +622,20 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
 
             {/* Main 2-Column Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Left Column: Bank Account Details */}
+              {/* Left Column: Mobile Wallets & Bank Account Details */}
               <div className="lg:col-span-7 space-y-6">
-                <div className="bg-white rounded-3xl border border-[#e5eeff] p-6 sm:p-8 shadow-sm space-y-6">
+                {/* Mobile Accounts Primary Box (JazzCash & Easypaisa) */}
+                <div className="bg-white rounded-3xl border border-[#dce9ff] p-6 sm:p-8 shadow-sm space-y-6">
                   <div className="flex items-center justify-between pb-4 border-b border-[#eff4ff]">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#4648d4] flex items-center justify-center font-bold">
-                        <span className="material-symbols-outlined text-[22px]">account_balance</span>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ea580c] to-[#4648d4] text-white flex items-center justify-center font-bold shadow-sm">
+                        <span className="material-symbols-outlined text-[22px]">smartphone</span>
                       </div>
                       <div>
                         <h3 className="font-headline font-bold text-lg text-[#0b1c30]">
-                          {settings.bankName}
+                          JazzCash &amp; Easypaisa Transfer
                         </h3>
-                        <p className="text-xs text-[#767586]">{settings.bankSubtitle}</p>
+                        <p className="text-xs text-[#767586]">Instant Mobile Account Payment Rails</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -645,108 +646,152 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                           title="Admin: Change live account numbers"
                         >
                           <span className="material-symbols-outlined text-[15px]">settings</span>
-                          <span className="hidden sm:inline">Edit Accounts</span>
+                          <span className="hidden sm:inline">Edit Numbers</span>
                         </button>
                       )}
                       <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">verified</span>
-                        <span>Verified Escrow</span>
+                        <span>Verified 0% Fee</span>
                       </span>
                     </div>
                   </div>
 
                   <p className="text-xs text-[#464554] leading-relaxed">
-                    Please transfer the exact amount{' '}
+                    Please transfer the exact payable amount{' '}
                     <strong className="text-[#4648d4] font-bold">
                       {selectedProduct.formattedPrice}
                     </strong>{' '}
-                    to the corporate bank account or mobile wallet below via your banking app:
+                    to any of our official verified mobile accounts below via your JazzCash or Easypaisa app:
                   </p>
 
-                  {/* Account Title */}
-                  <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#e5eeff] flex items-center justify-between gap-4">
-                    <div>
-                      <span className="text-[11px] font-semibold text-[#767586] block">
-                        ACCOUNT TITLE
-                      </span>
-                      <span className="font-headline font-bold text-base text-[#0b1c30]">
-                        {settings.accountTitle}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(settings.accountTitle, 'Account Title')}
-                      className="px-3 py-1.5 bg-white hover:bg-[#eff4ff] text-[#4648d4] text-xs font-bold rounded-xl border border-[#dce9ff] shadow-xs flex items-center gap-1 transition-all"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">content_copy</span>
-                      <span>Copy</span>
-                    </button>
-                  </div>
-
-                  {/* Account Number */}
-                  <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#e5eeff] flex items-center justify-between gap-4">
-                    <div>
-                      <span className="text-[11px] font-semibold text-[#767586] block">
-                        FAST DEPOSIT ACCOUNT NUMBER
-                      </span>
-                      <span className="font-mono font-bold text-lg text-[#0b1c30] tracking-wider">
-                        {settings.accountNumber}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(settings.accountNumber.replace(/[^0-9A-Za-z]/g, ''), 'Account Number')}
-                      className="px-3.5 py-1.5 bg-[#4648d4] hover:bg-[#6063ee] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1 transition-all"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">content_copy</span>
-                      <span>Copy Account Number</span>
-                    </button>
-                  </div>
-
-                  {/* IBAN */}
-                  <div className="p-4 rounded-2xl bg-[#f8f9ff] border border-[#e5eeff] flex items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-[#767586]">IBAN</span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                          1-Link Active
-                        </span>
-                      </div>
-                      <span className="font-mono font-bold text-sm sm:text-base text-[#0b1c30] tracking-wider break-all">
-                        {settings.iban}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(settings.iban.replace(/\s+/g, ''), 'IBAN')}
-                      className="px-3 py-1.5 bg-white hover:bg-[#eff4ff] text-[#4648d4] text-xs font-bold rounded-xl border border-[#dce9ff] shadow-xs flex items-center gap-1 transition-all shrink-0"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">content_copy</span>
-                      <span>Copy IBAN</span>
-                    </button>
-                  </div>
-
-                  {/* Mobile Wallet Rail */}
-                  <div className="p-4 rounded-2xl bg-[#eff4ff]/80 border border-[#dce9ff] flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-white text-[#006c49] flex items-center justify-center font-bold shadow-xs">
-                        <span className="material-symbols-outlined text-[20px]">phone_android</span>
+                  {/* JazzCash Mobile Account Card */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-50/60 to-[#fff7ed] border border-red-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-red-600 text-white flex items-center justify-center font-extrabold text-sm shadow-sm shrink-0">
+                        JC
                       </div>
                       <div>
-                        <span className="text-[11px] font-bold text-[#464554] uppercase tracking-wider block">
-                          {settings.walletName}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-extrabold text-red-900 tracking-wider">
+                            JAZZCASH MOBILE ACCOUNT
+                          </span>
+                          <span className="text-[10px] font-bold bg-red-100 text-red-800 px-2 py-0.5 rounded-md border border-red-200">
+                            Direct Transfer
+                          </span>
+                        </div>
+                        <span className="font-mono font-extrabold text-lg sm:text-xl text-[#0b1c30] tracking-wider block mt-0.5">
+                          {settings.jazzcashNumber || settings.walletNumber || '03145338340'}
                         </span>
-                        <span className="font-mono font-bold text-base text-[#0b1c30]">
-                          {settings.walletNumber}
+                        <span className="text-[11px] text-[#464554] font-medium block">
+                          Account Title: <strong className="text-[#0b1c30]">{settings.jazzcashTitle || settings.walletTitle || 'Insight Products'}</strong>
                         </span>
-                        <span className="text-[11px] text-[#767586] block">Title: {settings.walletTitle}</span>
                       </div>
                     </div>
                     <button
-                      onClick={() => copyToClipboard(settings.walletNumber.replace(/[^0-9]/g, ''), 'Wallet Number')}
-                      className="px-3 py-1.5 bg-white hover:bg-[#eff4ff] text-[#4648d4] text-xs font-bold rounded-xl border border-[#dce9ff] shadow-xs flex items-center gap-1 transition-all"
+                      onClick={() =>
+                        copyToClipboard(
+                          (settings.jazzcashNumber || settings.walletNumber || '03145338340').replace(/[^0-9]/g, ''),
+                          'JazzCash Number'
+                        )
+                      }
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all shrink-0"
                     >
                       <span className="material-symbols-outlined text-[16px]">content_copy</span>
-                      <span>Copy Number</span>
+                      <span>Copy JazzCash</span>
                     </button>
                   </div>
+
+                  {/* Easypaisa Mobile Account Card */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50/60 to-[#eff4ff] border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-[#006c49] text-white flex items-center justify-center font-extrabold text-sm shadow-sm shrink-0">
+                        EP
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-extrabold text-[#006c49] tracking-wider">
+                            EASYPAISA MOBILE ACCOUNT
+                          </span>
+                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200">
+                            Instant Verified
+                          </span>
+                        </div>
+                        <span className="font-mono font-extrabold text-lg sm:text-xl text-[#0b1c30] tracking-wider block mt-0.5">
+                          {settings.easypaisaNumber || settings.walletNumber || '03145338340'}
+                        </span>
+                        <span className="text-[11px] text-[#464554] font-medium block">
+                          Account Title: <strong className="text-[#0b1c30]">{settings.easypaisaTitle || settings.walletTitle || 'Insight Products'}</strong>
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() =>
+                        copyToClipboard(
+                          (settings.easypaisaNumber || settings.walletNumber || '03145338340').replace(/[^0-9]/g, ''),
+                          'Easypaisa Number'
+                        )
+                      }
+                      className="px-4 py-2 bg-[#006c49] hover:bg-[#00885d] text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all shrink-0"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                      <span>Copy Easypaisa</span>
+                    </button>
+                  </div>
+
+                  {/* WhatsApp Verification Support Direct Desk */}
+                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-[20px]">chat</span>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-emerald-950 block">
+                          Need Help or Instant WhatsApp Confirmation?
+                        </span>
+                        <span className="font-mono text-xs font-bold text-emerald-800">
+                          {settings.whatsappDisplay || '0314 5338340'}
+                        </span>
+                      </div>
+                    </div>
+                    <a
+                      href={`https://wa.me/${(settings.whatsappSupportNumber || '+923145338340').replace(/\D/g, '')}?text=Hi%20Insight%20Products%20Support,%20I%20am%20ordering%20${encodeURIComponent(selectedProduct.name)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition-colors shrink-0"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">chat</span>
+                      <span>WhatsApp Desk</span>
+                    </a>
+                  </div>
+
+                  {/* Optional Bank Account Box (Shown ONLY when enableBankTransfer is explicitly enabled and configured by Admin) */}
+                  {settings.enableBankTransfer && settings.accountNumber && (
+                    <div className="p-5 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] space-y-3 pt-4 mt-4">
+                      <div className="flex items-center justify-between border-b border-[#eff4ff] pb-2">
+                        <span className="text-xs font-bold text-[#0b1c30] flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[#4648d4] text-[18px]">account_balance</span>
+                          <span>{settings.bankName} (1-Link Transfer)</span>
+                        </span>
+                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">Active</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <span className="text-[10px] text-[#767586] block">ACCOUNT NUMBER</span>
+                          <span className="font-mono font-bold text-sm text-[#0b1c30]">{settings.accountNumber}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-[#767586] block">ACCOUNT TITLE</span>
+                          <span className="font-bold text-sm text-[#0b1c30]">{settings.accountTitle}</span>
+                        </div>
+                        {settings.iban && (
+                          <div className="sm:col-span-2">
+                            <span className="text-[10px] text-[#767586] block">IBAN</span>
+                            <span className="font-mono font-bold text-xs text-[#0b1c30] break-all">{settings.iban}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Mandatory Upload Notice */}
                   <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
@@ -758,7 +803,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         Payment Proof is Mandatory Before Order Confirmation
                       </span>
                       <p className="text-amber-900 leading-relaxed">
-                        After transferring funds via your banking app or ATM, take a screenshot of the confirmation receipt and upload it in the form to your right. Once uploaded, your order will be confirmed immediately.
+                        After transferring funds via JazzCash or Easypaisa app, take a screenshot of the transaction slip and upload it in the form to your right. Once uploaded, your license will be queued for instant activation.
                       </p>
                     </div>
                   </div>
@@ -792,7 +837,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                       <span className="material-symbols-outlined text-[#6063ee] text-[22px] mb-1">
                         verified_user
                       </span>
-                      <div className="font-bold text-xs text-[#0b1c30]">Money-Back</div>
+                      <div className="font-bold text-xs text-[#0b1c30]">Replacement</div>
                       <div className="text-[10px] text-[#767586]">100% Guaranteed</div>
                     </div>
                     <div className="p-3 rounded-2xl bg-[#f8f9ff] border border-[#e5eeff]">
@@ -883,11 +928,15 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                       onChange={(e) => setSelectedRail(e.target.value as Order['paymentRail'])}
                       className="w-full px-4 py-3 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] text-sm text-[#0b1c30] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4648d4] font-semibold"
                     >
-                      <option value="Meezan Bank">Meezan Bank Corporate Account</option>
+                      <option value="JazzCash Retail">JazzCash ({settings.jazzcashNumber || settings.walletNumber || '03145338340'})</option>
+                      <option value="Easypaisa">Easypaisa ({settings.easypaisaNumber || settings.walletNumber || '03145338340'})</option>
                       <option value="Nayapay Wallet">Nayapay / Sadapay Wallet</option>
-                      <option value="JazzCash Retail">JazzCash Account</option>
-                      <option value="Easypaisa">Easypaisa Mobile Account</option>
-                      <option value="Bank Alfalah">Bank Alfalah 1-Link</option>
+                      {settings.enableBankTransfer && settings.accountNumber && (
+                        <>
+                          <option value="Meezan Bank">{settings.bankName || 'Direct Bank Account'}</option>
+                          <option value="Bank Alfalah">Bank Alfalah 1-Link</option>
+                        </>
+                      )}
                     </select>
                   </div>
 
