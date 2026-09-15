@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface NavbarProps {
   currentTab: 'home' | 'checkout' | 'ledger';
@@ -18,15 +18,51 @@ export const Navbar: React.FC<NavbarProps> = ({
   onBrowseProductsClick,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<'home' | 'catalog' | 'how-it-works' | 'faq'>('home');
 
-  const handleNavClick = (tab: 'home' | 'checkout' | 'ledger', anchorId?: string) => {
+  // Listen to window scroll to automatically update active blue pill as user scrolls
+  useEffect(() => {
+    if (currentTab !== 'home') return;
+
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + 200; // offset for header
+
+      const catalogEl = document.getElementById('catalog');
+      const howItWorksEl = document.getElementById('how-it-works');
+      const faqEl = document.getElementById('faq');
+
+      if (faqEl && scrollPos >= faqEl.offsetTop) {
+        setActiveSection('faq');
+      } else if (howItWorksEl && scrollPos >= howItWorksEl.offsetTop) {
+        setActiveSection('how-it-works');
+      } else if (catalogEl && scrollPos >= catalogEl.offsetTop) {
+        setActiveSection('catalog');
+      } else {
+        setActiveSection('home');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [currentTab]);
+
+  const handleNavClick = (tab: 'home' | 'checkout' | 'ledger', anchorId?: 'catalog' | 'how-it-works' | 'faq') => {
     setCurrentTab(tab);
     setMobileMenuOpen(false);
-    if (anchorId) {
-      setTimeout(() => {
-        const el = document.getElementById(anchorId);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 60);
+
+    if (tab === 'home') {
+      if (anchorId) {
+        setActiveSection(anchorId);
+        setTimeout(() => {
+          const el = document.getElementById(anchorId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 60);
+      } else {
+        setActiveSection('home');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -62,12 +98,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Desktop Navigation - Strictly Home, Products, How It Works, FAQ */}
+          {/* Desktop Navigation - Home, Products, How It Works, FAQ */}
           <nav className="hidden md:flex items-center gap-1 p-1 bg-[#f0f4ff]/80 rounded-2xl border border-[#e5eeff]">
             <button
               onClick={() => handleNavClick('home')}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                currentTab === 'home'
+                currentTab === 'home' && activeSection === 'home'
                   ? 'bg-[#4648d4] text-white shadow-sm'
                   : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
               }`}
@@ -76,19 +112,31 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => handleNavClick('home', 'catalog')}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff] transition-all"
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                currentTab === 'home' && activeSection === 'catalog'
+                  ? 'bg-[#4648d4] text-white shadow-sm'
+                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
+              }`}
             >
               Products
             </button>
             <button
               onClick={() => handleNavClick('home', 'how-it-works')}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff] transition-all"
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                currentTab === 'home' && activeSection === 'how-it-works'
+                  ? 'bg-[#4648d4] text-white shadow-sm'
+                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
+              }`}
             >
               How It Works
             </button>
             <button
               onClick={() => handleNavClick('home', 'faq')}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff] transition-all"
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                currentTab === 'home' && activeSection === 'faq'
+                  ? 'bg-[#4648d4] text-white shadow-sm'
+                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
+              }`}
             >
               FAQ
             </button>
@@ -115,15 +163,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => {
                 if (currentTab !== 'home') {
                   setCurrentTab('home');
+                }
+                setActiveSection('catalog');
+                if (onBrowseProductsClick) {
+                  onBrowseProductsClick();
+                } else {
                   setTimeout(() => {
                     const el = document.getElementById('catalog');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }, 60);
-                } else if (onBrowseProductsClick) {
-                  onBrowseProductsClick();
-                } else {
-                  const el = document.getElementById('catalog');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-[#4648d4] hover:bg-[#6063ee] text-white text-xs font-bold rounded-xl shadow-[0_4px_14px_rgba(70,72,212,0.28)] transition-all hover:scale-[1.01] active:scale-[0.99]"
@@ -219,9 +267,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         <nav className="flex flex-col gap-2 flex-1 mt-6">
           <button
             onClick={() => handleNavClick('home')}
-            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm ${
-              currentTab === 'home'
-                ? 'bg-[#e4e0f5] text-[#4648d4] font-bold'
+            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              currentTab === 'home' && activeSection === 'home'
+                ? 'bg-[#4648d4] text-white font-bold shadow-sm'
                 : 'text-[#464554] hover:bg-[#eff4ff]'
             }`}
           >
@@ -229,19 +277,31 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => handleNavClick('home', 'catalog')}
-            className="w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm text-[#464554] hover:bg-[#eff4ff]"
+            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              currentTab === 'home' && activeSection === 'catalog'
+                ? 'bg-[#4648d4] text-white font-bold shadow-sm'
+                : 'text-[#464554] hover:bg-[#eff4ff]'
+            }`}
           >
             Products
           </button>
           <button
             onClick={() => handleNavClick('home', 'how-it-works')}
-            className="w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm text-[#464554] hover:bg-[#eff4ff]"
+            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              currentTab === 'home' && activeSection === 'how-it-works'
+                ? 'bg-[#4648d4] text-white font-bold shadow-sm'
+                : 'text-[#464554] hover:bg-[#eff4ff]'
+            }`}
           >
             How It Works
           </button>
           <button
             onClick={() => handleNavClick('home', 'faq')}
-            className="w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm text-[#464554] hover:bg-[#eff4ff]"
+            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              currentTab === 'home' && activeSection === 'faq'
+                ? 'bg-[#4648d4] text-white font-bold shadow-sm'
+                : 'text-[#464554] hover:bg-[#eff4ff]'
+            }`}
           >
             FAQ
           </button>
