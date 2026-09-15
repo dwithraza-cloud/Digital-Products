@@ -41,7 +41,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
   onUpdatePaymentSettings,
   onOpenAIAgent,
 }) => {
-  const [adminSectionTab, setAdminSectionTab] = useState<'all' | 'orders' | 'products' | 'receipts' | 'crm' | 'vendors'>('all');
+  const [adminSectionTab, setAdminSectionTab] = useState<'orders' | 'receipts' | 'products' | 'crm' | 'vendors' | 'payments'>('orders');
   const [showAIAgentModal, setShowAIAgentModal] = useState(false);
   const [receiptFilter, setReceiptFilter] = useState<'all' | 'verified' | 'awaiting' | 'dispatched'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,6 +49,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
     'all' | 'expired' | 'expiring-soon' | 'high-margin' | 'canva' | 'ai' | 'capcut'
   >('all');
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>('Ayesha Khan');
+  const [showCustomerDossierModal, setShowCustomerDossierModal] = useState(false);
   const [dateRange, setDateRange] = useState('All Time (Live Active P&L)');
 
   // Product Management States
@@ -619,178 +620,49 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
       )}
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Top Header & Admin Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#e5eeff]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-xl bg-[#4648d4] text-white flex items-center justify-center shadow-md">
-                <span className="material-symbols-outlined text-[20px]">analytics</span>
+            <div className="flex items-center gap-2.5">
+              <span className="w-9 h-9 rounded-2xl bg-[#4648d4] text-white flex items-center justify-center shadow-md">
+                <span className="material-symbols-outlined text-[22px]">admin_panel_settings</span>
               </span>
-              <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-[#0b1c30]">
-                Insight Operations CRM &amp; Live P&amp;L Ledger
-              </h1>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-headline font-extrabold text-2xl sm:text-3xl text-[#0b1c30]">
+                    Admin Control Center
+                  </h1>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
+                    Live Operations
+                  </span>
+                </div>
+                <p className="text-xs text-[#767586] mt-0.5">
+                  Track orders, profit margins, client payment proofs, inventory, and WhatsApp renewals.
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-[#767586] mt-1">
-              Full admin control: edit live orders, delete records, track software license expiry, and send 1-click WhatsApp renewal reminders.
-            </p>
           </div>
 
-          {/* Action Buttons Toolbar */}
+          {/* Quick Action Toolbar */}
           <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={handleExportCSV}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#eff4ff] text-[#464554] border border-[#dce9ff] text-xs font-bold rounded-xl shadow-sm transition-all"
-              title="Download all orders as CSV"
-            >
-              <span className="material-symbols-outlined text-[16px]">download</span>
-              <span>Export CSV</span>
-            </button>
-
-            <button
-              onClick={() => setShowPaymentSettingsModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#fff7ed] hover:bg-[#ffedd5] text-[#c2410c] border border-[#fed7aa] text-xs font-bold rounded-xl shadow-sm transition-all"
-              title="Change bank account, wallet, and WhatsApp support numbers"
-            >
-              <span className="material-symbols-outlined text-[17px] text-[#ea580c]">account_balance</span>
-              <span>Bank &amp; Account Settings</span>
-            </button>
-
-            <button
               onClick={() => setShowLogSaleModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4648d4] hover:bg-[#6063ee] text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4648d4] hover:bg-[#6063ee] text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer"
+              title="Manual order entry for WhatsApp or direct clients"
             >
-              <span className="material-symbols-outlined text-[16px]">add_circle</span>
-              <span>Log Sale</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Live Official Payment Rails Bar */}
-        <div className="bg-[#0b1c30] text-white p-4 sm:p-5 rounded-3xl shadow-sm border border-[#213145] flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-[#ea580c] flex items-center justify-center text-white shrink-0 shadow-md">
-              <span className="material-symbols-outlined text-[22px]">account_balance</span>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-headline font-bold text-sm text-white">
-                  Official Public Payment Rails (Live Dynamic)
-                </span>
-                <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Sync Active
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-300 mt-1">
-                <span>
-                  Bank: <strong className="text-white">{paymentSettings.bankName}</strong> ({paymentSettings.accountNumber})
-                </span>
-                <span className="text-gray-500 hidden sm:inline">•</span>
-                <span>
-                  Title: <strong className="text-white">{paymentSettings.accountTitle}</strong>
-                </span>
-                <span className="text-gray-500 hidden sm:inline">•</span>
-                <span>
-                  Wallet: <strong className="text-amber-300">{paymentSettings.walletNumber}</strong> ({paymentSettings.walletTitle})
-                </span>
-                <span className="text-gray-500 hidden sm:inline">•</span>
-                <span>
-                  Support Desk: <strong className="text-emerald-300">{paymentSettings.whatsappDisplay}</strong>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowPaymentSettingsModal(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-bold rounded-xl shadow-md transition-all shrink-0"
-          >
-            <span className="material-symbols-outlined text-[16px]">edit</span>
-            <span>Change Account Numbers</span>
-          </button>
-        </div>
-
-        {/* Admin Navigation Hub Switcher Tabs */}
-        <div className="flex items-center justify-between gap-3 overflow-x-auto pb-1 scrollbar-none bg-white p-2 rounded-3xl border border-[#dce9ff] shadow-sm">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => setAdminSectionTab('all')}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                adminSectionTab === 'all'
-                  ? 'bg-[#4648d4] text-white shadow-sm'
-                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">dashboard</span>
-              <span>All Hubs</span>
+              <span className="material-symbols-outlined text-[17px]">add_circle</span>
+              <span>+ Log Sale</span>
             </button>
 
             <button
-              onClick={() => setAdminSectionTab('orders')}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                adminSectionTab === 'orders'
-                  ? 'bg-[#4648d4] text-white shadow-sm'
-                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
-              }`}
+              onClick={handleAddNewProductModal}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-              <span>Live Orders &amp; P&amp;L ({orders.length})</span>
+              <span className="material-symbols-outlined text-[17px]">add_box</span>
+              <span>+ Add Product</span>
             </button>
 
-            <button
-              onClick={() => setAdminSectionTab('receipts')}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                adminSectionTab === 'receipts'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-[#464554] hover:text-purple-700 hover:bg-purple-50'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">image</span>
-              <span>Payment Slips Gallery ({orders.filter((o) => o.receiptImage || o.receiptName).length})</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-900 text-[9px] font-extrabold border border-purple-200">
-                PROOFS
-              </span>
-            </button>
-
-            <button
-              onClick={() => setAdminSectionTab('products')}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                adminSectionTab === 'products'
-                  ? 'bg-[#4648d4] text-white shadow-sm'
-                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">inventory_2</span>
-              <span>Product Catalog ({products.length})</span>
-            </button>
-
-            <button
-              onClick={() => setAdminSectionTab('crm')}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                adminSectionTab === 'crm'
-                  ? 'bg-[#4648d4] text-white shadow-sm'
-                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">person_pin</span>
-              <span>CRM Dossiers</span>
-            </button>
-
-            <button
-              onClick={() => setAdminSectionTab('vendors')}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                adminSectionTab === 'vendors'
-                  ? 'bg-[#4648d4] text-white shadow-sm'
-                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">hub</span>
-              <span>Wholesalers ({vendorList.length})</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => {
                 if (onOpenAIAgent) {
@@ -799,107 +671,177 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
                   setShowAIAgentModal(true);
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-[#4648d4] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-2xl shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-[#4648d4] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
               title="Open AI Operations Copilot"
             >
-              <span className="material-symbols-outlined text-[16px]">smart_toy</span>
-              <span>🤖 AI Operations Agent</span>
+              <span className="material-symbols-outlined text-[17px]">smart_toy</span>
+              <span>🤖 AI Copilot</span>
             </button>
 
             <button
-              onClick={handleAddNewProductModal}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-2xl shadow-sm transition-all"
+              onClick={handleExportCSV}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-[#eff4ff] text-[#464554] border border-[#dce9ff] text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              title="Download all orders as CSV"
             >
-              <span className="material-symbols-outlined text-[16px]">add_box</span>
-              <span>+ Add New Product</span>
+              <span className="material-symbols-outlined text-[16px]">download</span>
+              <span>CSV</span>
             </button>
           </div>
         </div>
 
-        {/* 5 KPI Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {/* Card 1: Gross Revenue */}
-          <div className="p-5 rounded-3xl bg-white border border-[#e5eeff] shadow-sm space-y-2">
+        {/* 4 Clean Metric Summary Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Card 1: Gross Sales */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#e5eeff] shadow-xs space-y-1.5">
             <div className="flex items-center justify-between text-[#767586] text-xs font-bold uppercase tracking-wider">
-              <span>Gross Revenue</span>
-              <span className="material-symbols-outlined text-[20px] text-[#006c49]">trending_up</span>
+              <span>Total Revenue</span>
+              <span className="material-symbols-outlined text-[18px] text-[#006c49]">trending_up</span>
             </div>
             <div className="font-headline font-extrabold text-2xl text-[#0b1c30]">
               Rs {totalRevenue.toLocaleString()}
             </div>
             <div className="text-[11px] font-semibold text-[#006c49] flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">north</span>
-              <span>{orders.length} Active Orders</span>
+              <span>{orders.length} verified orders</span>
             </div>
           </div>
 
-          {/* Card 2: COGS */}
-          <div className="p-5 rounded-3xl bg-white border border-[#e5eeff] shadow-sm space-y-2">
+          {/* Card 2: Net Profit */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80 shadow-xs space-y-1.5">
+            <div className="flex items-center justify-between text-emerald-800 text-xs font-bold uppercase tracking-wider">
+              <span>Net Profit</span>
+              <span className="material-symbols-outlined text-[18px] text-emerald-600">payments</span>
+            </div>
+            <div className="font-headline font-extrabold text-2xl text-emerald-700">
+              Rs {netProfit.toLocaleString()}
+            </div>
+            <div className="text-[11px] font-bold text-emerald-700">
+              Avg Margin: {netMargin}%
+            </div>
+          </div>
+
+          {/* Card 3: Wholesale COGS */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#e5eeff] shadow-xs space-y-1.5">
             <div className="flex items-center justify-between text-[#767586] text-xs font-bold uppercase tracking-wider">
-              <span>COGS (Vendor Cost)</span>
-              <span className="material-symbols-outlined text-[20px] text-[#ba1a1a]">receipt_long</span>
+              <span>Wholesale Cost</span>
+              <span className="material-symbols-outlined text-[18px] text-[#ba1a1a]">receipt_long</span>
             </div>
             <div className="font-headline font-extrabold text-2xl text-[#0b1c30]">
               Rs {totalCOGS.toLocaleString()}
             </div>
             <div className="text-[11px] font-medium text-[#767586]">
-              Wholesale Sourcing
+              Supplier buy costs
             </div>
           </div>
 
-          {/* Card 3: Net Profit */}
-          <div className="p-5 rounded-3xl bg-white border border-[#e5eeff] shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#767586] text-xs font-bold uppercase tracking-wider">
-              <span>Net Profit</span>
-              <span className="material-symbols-outlined text-[20px] text-[#006c49]">payments</span>
-            </div>
-            <div className="font-headline font-extrabold text-2xl text-[#006c49]">
-              Rs {netProfit.toLocaleString()}
-            </div>
-            <div className="text-[11px] font-bold text-[#006c49]">
-              P&amp;L Margin: {netMargin}%
-            </div>
-          </div>
-
-          {/* Card 4: Avg Order Profit */}
-          <div className="p-5 rounded-3xl bg-white border border-[#e5eeff] shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#767586] text-xs font-bold uppercase tracking-wider">
-              <span>Avg Profit / Order</span>
-              <span className="material-symbols-outlined text-[20px] text-[#4648d4]">analytics</span>
-            </div>
-            <div className="font-headline font-extrabold text-2xl text-[#0b1c30]">
-              Rs {avgProfitPerOrder.toLocaleString()}
-            </div>
-            <div className="text-[11px] font-semibold text-[#4648d4]">
-              Across active roster
-            </div>
-          </div>
-
-          {/* Card 5: Software Expiry Alerts */}
-          <div className={`p-5 rounded-3xl border shadow-sm space-y-2 col-span-2 sm:col-span-1 ${
-            expiredOrdersCount > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-[#e5eeff]'
+          {/* Card 4: Subscriptions Expiry */}
+          <div className={`p-4 sm:p-5 rounded-2xl border shadow-xs space-y-1.5 ${
+            expiredOrdersCount > 0 ? 'bg-amber-50/70 border-amber-300/80' : 'bg-white border-[#e5eeff]'
           }`}>
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-              <span className={expiredOrdersCount > 0 ? 'text-red-700' : 'text-[#767586]'}>
+              <span className={expiredOrdersCount > 0 ? 'text-amber-900' : 'text-[#767586]'}>
                 Expiry Alerts
               </span>
-              <span className={`material-symbols-outlined text-[20px] ${
-                expiredOrdersCount > 0 ? 'text-red-600 animate-pulse' : 'text-[#ea580c]'
+              <span className={`material-symbols-outlined text-[18px] ${
+                expiredOrdersCount > 0 ? 'text-amber-700 animate-pulse' : 'text-gray-400'
               }`}>
                 notification_important
               </span>
             </div>
             <div className="font-headline font-extrabold text-2xl text-[#0b1c30] flex items-center gap-2">
-              <span className={expiredOrdersCount > 0 ? 'text-red-600' : 'text-[#0b1c30]'}>
-                {expiredOrdersCount}
+              <span className={expiredOrdersCount > 0 ? 'text-amber-800' : 'text-[#0b1c30]'}>
+                {expiredOrdersCount} Expired
               </span>
-              <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                {expiringSoonCount} soon
+              {expiringSoonCount > 0 && (
+                <span className="text-[11px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                  {expiringSoonCount} Soon
+                </span>
+              )}
+            </div>
+            <div className="text-[11px] font-semibold text-amber-900">
+              {expiredOrdersCount > 0 ? '1-Click WhatsApp renewal ready' : 'All subscriptions active'}
+            </div>
+          </div>
+        </div>
+
+        {/* Admin Navigation Hub Switcher Tabs */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none bg-white p-2 rounded-2xl border border-[#dce9ff] shadow-xs">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => setAdminSectionTab('all')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                adminSectionTab === 'all'
+                  ? 'bg-[#4648d4] text-white shadow-sm'
+                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[17px]">dashboard</span>
+              <span>All Hubs</span>
+            </button>
+
+            <button
+              onClick={() => setAdminSectionTab('orders')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                adminSectionTab === 'orders'
+                  ? 'bg-[#4648d4] text-white shadow-sm'
+                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[17px]">receipt_long</span>
+              <span>Live Orders ({orders.length})</span>
+            </button>
+
+            <button
+              onClick={() => setAdminSectionTab('receipts')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                adminSectionTab === 'receipts'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-[#464554] hover:text-purple-700 hover:bg-purple-50'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[17px]">image</span>
+              <span>Payment Slips</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                adminSectionTab === 'receipts' ? 'bg-white text-purple-700' : 'bg-purple-100 text-purple-800'
+              }`}>
+                {orders.filter((o) => o.receiptImage || o.receiptName).length}
               </span>
-            </div>
-            <div className="text-[11px] font-semibold text-red-700">
-              {expiredOrdersCount > 0 ? 'WhatsApp renewal ready' : 'All subscriptions active'}
-            </div>
+            </button>
+
+            <button
+              onClick={() => setAdminSectionTab('products')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                adminSectionTab === 'products'
+                  ? 'bg-[#4648d4] text-white shadow-sm'
+                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[17px]">inventory_2</span>
+              <span>Products &amp; Pricing ({products.length})</span>
+            </button>
+
+            <button
+              onClick={() => setAdminSectionTab('crm')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                adminSectionTab === 'crm'
+                  ? 'bg-[#4648d4] text-white shadow-sm'
+                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[17px]">person_pin</span>
+              <span>Customer CRM</span>
+            </button>
+
+            <button
+              onClick={() => setAdminSectionTab('vendors')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                adminSectionTab === 'vendors'
+                  ? 'bg-[#4648d4] text-white shadow-sm'
+                  : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[17px]">hub</span>
+              <span>Wholesalers ({vendorList.length})</span>
+            </button>
           </div>
         </div>
 
