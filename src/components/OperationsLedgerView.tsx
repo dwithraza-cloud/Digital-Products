@@ -140,15 +140,23 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
     return false;
   }).length;
 
-  // Filtered Orders
+  // Filtered Orders with multi-attribute search (Customer Name, Order ID / Ref, Product Name, etc.)
   const filteredOrders = orders.filter((order) => {
+    const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerPhone.includes(searchQuery) ||
-      order.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.refNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.paymentRail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (order.licenseKey && order.licenseKey.toLowerCase().includes(searchQuery.toLowerCase()));
+      !q ||
+      order.customerName.toLowerCase().includes(q) ||
+      (order.customerPhone && order.customerPhone.toLowerCase().includes(q)) ||
+      (order.customerEmail && order.customerEmail.toLowerCase().includes(q)) ||
+      (order.customerCity && order.customerCity.toLowerCase().includes(q)) ||
+      order.productName.toLowerCase().includes(q) ||
+      (order.productId && order.productId.toLowerCase().includes(q)) ||
+      order.refNumber.toLowerCase().includes(q) ||
+      order.id.toLowerCase().includes(q) ||
+      (order.transactionId && order.transactionId.toLowerCase().includes(q)) ||
+      (order.paymentRail && order.paymentRail.toLowerCase().includes(q)) ||
+      (order.licenseKey && order.licenseKey.toLowerCase().includes(q)) ||
+      (order.planDetails && order.planDetails.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
 
@@ -763,6 +771,145 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
           </div>
         </div>
 
+        {/* Global Search Bar Banner */}
+        <div className="bg-white rounded-2xl border border-[#dce9ff] p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-xl bg-[#eff4ff] text-[#4648d4] flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[19px]">search</span>
+              </span>
+              <div>
+                <h2 className="font-headline font-bold text-sm text-[#0b1c30] flex items-center gap-2">
+                  <span>Global Operations &amp; Orders Search</span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#eff4ff] text-[#4648d4] text-[11px] font-mono font-bold">
+                    {searchQuery.trim()
+                      ? `${filteredOrders.length} of ${orders.length} matched`
+                      : `${orders.length} active records`}
+                  </span>
+                </h2>
+                <p className="text-[11px] text-[#767586]">
+                  Instant multi-attribute search across customer names, order IDs (e.g. TX-1049281), product names, phone numbers, and license keys.
+                </p>
+              </div>
+            </div>
+
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#4648d4] hover:text-[#6063ee] bg-[#eff4ff] hover:bg-[#e0e9ff] px-3 py-1.5 rounded-xl transition-all self-start sm:self-auto cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">close</span>
+                <span>Clear Search</span>
+              </button>
+            )}
+          </div>
+
+          {/* Search Input Field */}
+          <div className="relative flex items-center">
+            <span className="material-symbols-outlined absolute left-3.5 text-[20px] text-[#4648d4] pointer-events-none">
+              manage_search
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search orders by customer name, order ID / ref # (e.g. TX-1049281), or product name (e.g. ChatGPT, Canva)..."
+              className="w-full pl-11 pr-24 py-3 rounded-xl border border-[#dce9ff] bg-[#f8f9ff] text-xs sm:text-sm text-[#0b1c30] placeholder-[#767586] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4648d4] transition-all shadow-inner"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 px-2.5 py-1 bg-[#dce9ff] hover:bg-[#cbdcff] text-[#0b1c30] rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                title="Clear input"
+              >
+                <span className="material-symbols-outlined text-[14px]">cancel</span>
+                <span>Clear</span>
+              </button>
+            ) : (
+              <span className="absolute right-3.5 text-[11px] font-mono text-[#767586] bg-white px-2 py-0.5 rounded border border-[#e5eeff] hidden sm:inline-block">
+                Type to filter
+              </span>
+            )}
+          </div>
+
+          {/* Quick Search Chips */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[11px] font-bold text-[#767586] mr-1">Quick Search:</span>
+            
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('Ayesha');
+                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
+            >
+              <span>👤</span>
+              <span>Ayesha Khan</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('TX-1049281');
+                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer font-mono"
+            >
+              <span>🆔</span>
+              <span>TX-1049281</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('ChatGPT');
+                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
+            >
+              <span>⚡</span>
+              <span>ChatGPT Plus</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('Canva');
+                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
+            >
+              <span>🎨</span>
+              <span>Canva Pro</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('CapCut');
+                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
+            >
+              <span>🎬</span>
+              <span>CapCut Pro</span>
+            </button>
+
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#eff4ff] text-[#4648d4] hover:bg-[#dce9ff] transition-all cursor-pointer ml-auto"
+              >
+                <span>✕ Show All ({orders.length})</span>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Admin Navigation Hub Switcher Tabs */}
         <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none bg-white p-2 rounded-2xl border border-[#dce9ff] shadow-xs">
           <div className="flex items-center gap-1.5 shrink-0">
@@ -865,17 +1012,27 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
               </div>
 
               {/* Search Bar */}
-              <div className="relative">
+              <div className="relative flex items-center">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search customer, phone, product..."
-                  className="w-full sm:w-64 pl-9 pr-3 py-2 rounded-xl border border-[#dce9ff] bg-[#f8f9ff] text-xs text-[#0b1c30] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4648d4]"
+                  placeholder="Search customer, ID, product..."
+                  className="w-full sm:w-64 pl-9 pr-8 py-2 rounded-xl border border-[#dce9ff] bg-[#f8f9ff] text-xs text-[#0b1c30] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4648d4] transition-all"
                 />
-                <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-[16px] text-[#767586]">
+                <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-[16px] text-[#4648d4] pointer-events-none">
                   search
                 </span>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 text-[#767586] hover:text-[#0b1c30] p-0.5 rounded cursor-pointer"
+                    title="Clear filter"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">close</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -966,8 +1123,30 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
                 <tbody className="divide-y divide-[#f8f9ff]">
                   {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-[#767586]">
-                        No matching orders found for this filter.
+                      <td colSpan={6} className="py-12 text-center">
+                        <div className="max-w-xs mx-auto space-y-3">
+                          <span className="w-12 h-12 rounded-2xl bg-[#eff4ff] text-[#4648d4] flex items-center justify-center mx-auto">
+                            <span className="material-symbols-outlined text-[24px]">search_off</span>
+                          </span>
+                          <div className="space-y-1">
+                            <div className="font-headline font-bold text-sm text-[#0b1c30]">
+                              No orders found {searchQuery ? `matching "${searchQuery}"` : 'for this filter'}
+                            </div>
+                            <p className="text-xs text-[#767586]">
+                              Try searching by customer name (e.g. Ayesha), order reference ID (e.g. TX-1049281), or product name (e.g. ChatGPT).
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery('');
+                              setActiveFilter('all');
+                            }}
+                            className="px-4 py-2 bg-[#4648d4] hover:bg-[#6063ee] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                          >
+                            Clear Search &amp; Show All Orders
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ) : (
