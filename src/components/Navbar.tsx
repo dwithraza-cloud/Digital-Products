@@ -7,6 +7,7 @@ interface NavbarProps {
   onOpenAdminLogin: () => void;
   onAdminLogout: () => void;
   onBrowseProductsClick?: () => void;
+  onOpenAIAgent?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,6 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdminLogin,
   onAdminLogout,
   onBrowseProductsClick,
+  onOpenAIAgent,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'home' | 'catalog' | 'how-it-works' | 'faq'>('home');
@@ -180,6 +182,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Browse Products</span>
             </button>
 
+            {/* AI Copilot Button (Admin Exclusive) */}
+            {isAdmin && onOpenAIAgent && (
+              <button
+                onClick={onOpenAIAgent}
+                title="Insight AI Store Copilot (Admin Exclusive)"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[17px]">smart_toy</span>
+                <span className="hidden sm:inline">AI Agent</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </button>
+            )}
+
             {/* Admin State & Login Trigger */}
             {isAdmin ? (
               <div className="flex items-center gap-2">
@@ -305,6 +320,26 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             FAQ
           </button>
+
+          {/* AI Copilot in Mobile Drawer (Admin Exclusive) */}
+          {isAdmin && onOpenAIAgent && (
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenAIAgent();
+              }}
+              className="w-full text-left px-4 py-2.5 rounded-xl font-bold text-sm bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] text-white flex items-center justify-between shadow-sm cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+                <span>Insight AI Agent</span>
+              </div>
+              <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded font-mono flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Admin Copilot
+              </span>
+            </button>
+          )}
 
           {/* Admin CRM Option in Mobile Drawer */}
           {isAdmin && (

@@ -22,6 +22,7 @@ interface OperationsLedgerViewProps {
   onNavigateToCheckout: () => void;
   paymentSettings: PaymentSettings;
   onUpdatePaymentSettings: (newSettings: PaymentSettings) => void;
+  onOpenAIAgent?: () => void;
 }
 
 export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
@@ -38,6 +39,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
   onNavigateToCheckout,
   paymentSettings,
   onUpdatePaymentSettings,
+  onOpenAIAgent,
 }) => {
   const [adminSectionTab, setAdminSectionTab] = useState<'all' | 'orders' | 'products' | 'receipts' | 'crm' | 'vendors'>('all');
   const [showAIAgentModal, setShowAIAgentModal] = useState(false);
@@ -790,8 +792,14 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
 
           <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => setShowAIAgentModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-[#4648d4] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-2xl shadow-sm transition-all animate-pulse"
+              onClick={() => {
+                if (onOpenAIAgent) {
+                  onOpenAIAgent();
+                } else {
+                  setShowAIAgentModal(true);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-[#4648d4] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-2xl shadow-sm transition-all cursor-pointer"
               title="Open AI Operations Copilot"
             >
               <span className="material-symbols-outlined text-[16px]">smart_toy</span>
@@ -2538,28 +2546,17 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
         onSaveSettings={onUpdatePaymentSettings}
       />
 
-      {/* Floating AI Operations Copilot Launcher */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => setShowAIAgentModal(true)}
-          className="group flex items-center gap-2.5 px-4 py-3 bg-linear-to-r from-[#0b1c30] via-[#4648d4] to-[#ea580c] hover:scale-105 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-full shadow-2xl transition-all border border-white/20 animate-pulse hover:animate-none cursor-pointer"
-        >
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[18px]">smart_toy</span>
-          </div>
-          <span>Ask AI Agent (Store Copilot)</span>
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-        </button>
-      </div>
-
-      {/* AI Operations Copilot Modal */}
+      {/* AI Operations Copilot Modal (Fallback) */}
       <AIOperationsAgentModal
         isOpen={showAIAgentModal}
         onClose={() => setShowAIAgentModal(false)}
+        isAdmin={true}
         products={products}
         orders={orders}
         vendors={vendorList}
         paymentSettings={paymentSettings}
+        learnedRules={[]}
+        onUpdateLearnedRules={() => {}}
         onUpdateProducts={(updatedProds) => {
           if (onUpdateProducts) onUpdateProducts(updatedProds);
           setExportNotice('Products catalog updated via AI Agent!');

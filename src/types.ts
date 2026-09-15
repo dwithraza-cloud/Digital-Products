@@ -109,3 +109,13 @@ export interface PaymentSettings {
   whatsappDisplay: string;
   ocrNoticeMinutes: string;
 }
+
+export interface LearnedMemoryRule {
+  id: string;
+  category: 'policy' | 'pricing' | 'delivery' | 'bank' | 'customer' | 'general';
+  title: string;
+  instruction: string;
+  learnedAt: string;
+  source: 'chat_conversation' | 'admin_manual' | 'system_default';
+  active: boolean;
+}

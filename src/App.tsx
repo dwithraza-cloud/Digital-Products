@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Product, Order, PaymentSettings } from './types';
-import { PRODUCTS, INITIAL_ORDERS, DEFAULT_PAYMENT_SETTINGS } from './data/mockData';
+import { Product, Order, PaymentSettings, LearnedMemoryRule } from './types';
+import { PRODUCTS, INITIAL_ORDERS, DEFAULT_PAYMENT_SETTINGS, VENDORS, INITIAL_LEARNED_RULES } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { StorefrontView } from './components/StorefrontView';
 import { CheckoutView } from './components/CheckoutView';
 import { OperationsLedgerView } from './components/OperationsLedgerView';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminPaymentSettingsModal } from './components/AdminPaymentSettingsModal';
+import { AIOperationsAgentModal } from './components/AIOperationsAgentModal';
 import { Footer } from './components/Footer';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'home' | 'checkout' | 'ledger'>('home');
+  const [showAIAgentModal, setShowAIAgentModal] = useState<boolean>(false);
 
   // Dynamic Products List with local persistence
   const [products, setProducts] = useState<Product[]>(() => {
@@ -107,6 +109,28 @@ export default function App() {
     localStorage.setItem('insight_payment_settings', JSON.stringify(newSettings));
   };
 
+  // Continuous Learning Memory Rules state with persistence
+  const [learnedRules, setLearnedRules] = useState<LearnedMemoryRule[]>(() => {
+    const saved = localStorage.getItem('insight_learned_rules');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.error('Failed to load learned rules:', e);
+      }
+    }
+    return INITIAL_LEARNED_RULES;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('insight_learned_rules', JSON.stringify(learnedRules));
+  }, [learnedRules]);
+
+  const handleUpdateLearnedRules = (newRules: LearnedMemoryRule[]) => {
+    setLearnedRules(newRules);
+  };
+
   // Admin authentication state
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     return localStorage.getItem('lumina_is_admin') === 'true';
@@ -160,7 +184,16 @@ export default function App() {
   const handleAdminLogout = () => {
     setIsAdmin(false);
     localStorage.removeItem('lumina_is_admin');
+    setShowAIAgentModal(false);
     setCurrentTab('home');
+  };
+
+  const handleOpenAIAgent = () => {
+    if (!isAdmin) {
+      setShowAdminLoginModal(true);
+    } else {
+      setShowAIAgentModal(true);
+    }
   };
 
   const handleFooterNavigate = (tab: 'home' | 'checkout' | 'ledger', anchorId?: string) => {
@@ -194,6 +227,7 @@ export default function App() {
         isAdmin={isAdmin}
         onOpenAdminLogin={() => setShowAdminLoginModal(true)}
         onAdminLogout={handleAdminLogout}
+        onOpenAIAgent={handleOpenAIAgent}
         onBrowseProductsClick={() => {
           if (currentTab !== 'home') {
             setCurrentTab('home');
@@ -268,6 +302,7 @@ export default function App() {
                 onNavigateToCheckout={() => setCurrentTab('checkout')}
                 paymentSettings={paymentSettings}
                 onUpdatePaymentSettings={handleUpdatePaymentSettings}
+                onOpenAIAgent={() => setShowAIAgentModal(true)}
               />
             ) : (
               <div className="max-w-md mx-auto my-20 p-8 bg-white rounded-3xl border border-[#e5eeff] text-center shadow-lg space-y-4">
@@ -315,6 +350,55 @@ export default function App() {
         onClose={() => setShowGlobalPaymentSettingsModal(false)}
         currentSettings={paymentSettings}
         onSaveSettings={handleUpdatePaymentSettings}
+      />
+
+      {/* Floating Global AI Operations Agent Launcher (Admin Exclusive) */}
+      {isAdmin && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <button
+            onClick={handleOpenAIAgent}
+            title="Open Insight AI Operations Copilot (Admin Exclusive)"
+            className="group flex items-center gap-2.5 px-4 py-3 bg-linear-to-r from-[#0b1c30] via-[#4648d4] to-[#ea580c] hover:scale-105 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-full shadow-[0_12px_30px_rgba(70,72,212,0.35)] transition-all border border-white/25 cursor-pointer"
+          >
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+            </div>
+            <span>Insight AI Agent</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
+        </div>
+      )}
+
+      {/* Global AI Operations Copilot Modal (Admin Exclusive) */}
+      <AIOperationsAgentModal
+        isOpen={showAIAgentModal}
+        onClose={() => setShowAIAgentModal(false)}
+        isAdmin={isAdmin}
+        onOpenAdminLogin={() => {
+          setShowAIAgentModal(false);
+          setShowAdminLoginModal(true);
+        }}
+        products={products}
+        orders={orders}
+        vendors={VENDORS}
+        paymentSettings={paymentSettings}
+        learnedRules={learnedRules}
+        onUpdateProducts={handleUpdateProducts}
+        onUpdateOrder={handleUpdateOrder}
+        onUpdateOrders={(newOrders) => setOrders(newOrders)}
+        onUpdatePaymentSettings={handleUpdatePaymentSettings}
+        onUpdateLearnedRules={handleUpdateLearnedRules}
+        onNavigateToStorefront={() => setCurrentTab('home')}
+        onNavigateToCheckout={() => setCurrentTab('checkout')}
+        onNavigateTab={(tab) => {
+          if (tab === 'receipts' || tab === 'orders' || tab === 'products' || tab === 'crm' || tab === 'vendors') {
+            if (!isAdmin) {
+              setShowAdminLoginModal(true);
+            } else {
+              setCurrentTab('ledger');
+            }
+          }
+        }}
       />
 
       {/* Global Footer */}

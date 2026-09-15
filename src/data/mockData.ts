@@ -1,4 +1,4 @@
-import { Product, Order, Vendor, CustomerDossier, PaymentSettings } from '../types';
+import { Product, Order, Vendor, CustomerDossier, PaymentSettings, LearnedMemoryRule } from '../types';
 
 import primeImg from '../assets/images/prime_video_banner_1788936965552.jpg';
 import netflixImg from '../assets/images/netflix_subscription_banner_1788936900430.jpg';
@@ -614,4 +614,52 @@ export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
   whatsappDisplay: '0314 5338340',
   ocrNoticeMinutes: 'Instant Transfer',
 };
+
+export const INITIAL_LEARNED_RULES: LearnedMemoryRule[] = [
+  {
+    id: 'rule-warranty-1',
+    category: 'policy',
+    title: '30-Day Escrow Replacement Warranty',
+    instruction: 'All subscriptions, private profiles, and license keys come with a 30-day replacement escrow warranty against account blocks.',
+    learnedAt: 'System Core Rule',
+    source: 'system_default',
+    active: true,
+  },
+  {
+    id: 'rule-speed-2',
+    category: 'delivery',
+    title: 'Fulfillment Speed Under 10 Minutes',
+    instruction: 'Standard delivery via automated WhatsApp notification and dashboard instant dispatch is within 5 to 10 minutes of slip confirmation.',
+    learnedAt: 'System Core Rule',
+    source: 'system_default',
+    active: true,
+  },
+  {
+    id: 'rule-payment-3',
+    category: 'bank',
+    title: 'Payment Verification Protocol',
+    instruction: 'Accept JazzCash, Easypaisa, and Meezan Bank transfers. Slips must clearly show TRX ID, sender phone/account, and amount matching catalog price.',
+    learnedAt: 'System Core Rule',
+    source: 'system_default',
+    active: true,
+  },
+  {
+    id: 'rule-lang-4',
+    category: 'general',
+    title: 'Fluent Roman Urdu, Urdu & English Communication',
+    instruction: 'Communicate fluently and courteously in Roman Urdu, Urdu, or English matching the store owner or customer preference.',
+    learnedAt: 'System Core Rule',
+    source: 'system_default',
+    active: true,
+  },
+  {
+    id: 'rule-vip-5',
+    category: 'customer',
+    title: 'VIP & Repeat Customer Privileges',
+    instruction: 'Repeat clients and agencies get expedited license renewals and prioritized vendor key provisioning.',
+    learnedAt: 'System Core Rule',
+    source: 'system_default',
+    active: true,
+  },
+];
 

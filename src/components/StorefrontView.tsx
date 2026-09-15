@@ -93,7 +93,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#4648d4] hover:bg-[#6063ee] text-white font-bold rounded-2xl shadow-[0_8px_20px_rgba(70,72,212,0.28)] transition-all hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <span className="material-symbols-outlined text-[20px]">explore</span>
-                  <span>Explore {activeProducts.length} Verified Products</span>
+                  <span>Explore Verified Products</span>
                 </a>
 
                 <a
@@ -155,7 +155,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-[#dce9ff] rounded-full text-xs font-bold text-[#4648d4] uppercase tracking-wider mb-2 shadow-xs">
-                <span>⚡ Curated {activeProducts.length} Verified Software Passes</span>
+                <span>⚡ Curated Verified Software Passes</span>
               </div>
               <h2 className="font-headline font-bold text-2xl sm:text-3xl md:text-4xl text-[#0b1c30]">
                 Verified Digital Licenses &amp; Passes
