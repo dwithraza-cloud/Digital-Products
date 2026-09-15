@@ -20,6 +20,7 @@ interface AIOperationsAgentModalProps {
   onNavigateTab: (tab: 'all' | 'orders' | 'products' | 'receipts' | 'crm' | 'vendors') => void;
   onNavigateToStorefront?: () => void;
   onNavigateToCheckout?: () => void;
+  onOpenLiveVoice?: () => void;
 }
 
 interface Message {
@@ -57,6 +58,7 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
   onNavigateTab,
   onNavigateToStorefront,
   onNavigateToCheckout,
+  onOpenLiveVoice,
 }) => {
   const [activeView, setActiveView] = useState<'chat' | 'brain'>('chat');
   const [messages, setMessages] = useState<Message[]>([
@@ -599,6 +601,21 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Live Voice API Trigger */}
+            {onOpenLiveVoice && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenLiveVoice();
+                }}
+                title="Switch to Real-Time Voice (gemini-3.1-flash-live-preview)"
+                className="px-2.5 py-1.5 rounded-xl bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px] animate-pulse">graphic_eq</span>
+                <span className="hidden sm:inline">Voice Live</span>
+              </button>
+            )}
+
             {/* View Switcher Button */}
             <div className="flex items-center bg-white/10 rounded-xl p-0.5 border border-white/10">
               <button

@@ -8,11 +8,13 @@ import { OperationsLedgerView } from './components/OperationsLedgerView';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminPaymentSettingsModal } from './components/AdminPaymentSettingsModal';
 import { AIOperationsAgentModal } from './components/AIOperationsAgentModal';
+import { LiveVoiceModal } from './components/LiveVoiceModal';
 import { Footer } from './components/Footer';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'home' | 'checkout' | 'ledger'>('home');
   const [showAIAgentModal, setShowAIAgentModal] = useState<boolean>(false);
+  const [showLiveVoiceModal, setShowLiveVoiceModal] = useState<boolean>(false);
 
   // Dynamic Products List with local persistence
   const [products, setProducts] = useState<Product[]>(() => {
@@ -75,12 +77,21 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          // If stored data contains the old mock demo orders (ord-01 to ord-07), purge them to zero
+          const hasOldMockOrders = parsed.some((o: Order) => typeof o.id === 'string' && o.id.startsWith('ord-0'));
+          if (hasOldMockOrders) {
+            localStorage.setItem('insight_orders', JSON.stringify([]));
+            localStorage.removeItem('insight_customer_dossiers');
+            return [];
+          }
+          return parsed;
+        }
       } catch (e) {
         console.error(e);
       }
     }
-    return INITIAL_ORDERS;
+    return [];
   });
 
   // Dynamic Payment Rails Settings with local persistence
@@ -169,9 +180,10 @@ export default function App() {
   };
 
   const handleResetOrders = () => {
-    if (window.confirm('Reset orders back to initial demo baseline?')) {
-      setOrders(INITIAL_ORDERS);
-      localStorage.setItem('insight_orders', JSON.stringify(INITIAL_ORDERS));
+    if (window.confirm('Clear all orders and sales records back to zero?')) {
+      setOrders([]);
+      localStorage.setItem('insight_orders', JSON.stringify([]));
+      localStorage.removeItem('insight_customer_dossiers');
     }
   };
 
@@ -227,7 +239,8 @@ export default function App() {
         isAdmin={isAdmin}
         onOpenAdminLogin={() => setShowAdminLoginModal(true)}
         onAdminLogout={handleAdminLogout}
-        onOpenAIAgent={handleOpenAIAgent}
+        onOpenAIAgent={isAdmin ? handleOpenAIAgent : undefined}
+        onOpenLiveVoice={isAdmin ? () => setShowLiveVoiceModal(true) : undefined}
         onBrowseProductsClick={() => {
           if (currentTab !== 'home') {
             setCurrentTab('home');
@@ -303,6 +316,7 @@ export default function App() {
                 paymentSettings={paymentSettings}
                 onUpdatePaymentSettings={handleUpdatePaymentSettings}
                 onOpenAIAgent={() => setShowAIAgentModal(true)}
+                onOpenLiveVoice={() => setShowLiveVoiceModal(true)}
               />
             ) : (
               <div className="max-w-md mx-auto my-20 p-8 bg-white rounded-3xl border border-[#e5eeff] text-center shadow-lg space-y-4">
@@ -352,9 +366,23 @@ export default function App() {
         onSaveSettings={handleUpdatePaymentSettings}
       />
 
-      {/* Floating Global AI Operations Agent Launcher (Admin Exclusive) */}
+      {/* Floating Action Buttons (Admin Exclusive) */}
       {isAdmin && (
-        <div className="fixed bottom-6 right-6 z-40">
+        <div className="fixed bottom-6 right-6 z-40 flex flex-col sm:flex-row items-end sm:items-center gap-2.5">
+          {/* Real-time Voice Live Assistant (Gemini Live API) - Admin Exclusive */}
+          <button
+            onClick={() => setShowLiveVoiceModal(true)}
+            title="Open Admin Real-Time Voice Copilot (gemini-3.1-flash-live-preview)"
+            className="group flex items-center gap-2.5 px-4 py-3 bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:scale-105 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-full shadow-[0_12px_30px_rgba(70,72,212,0.4)] transition-all border border-white/25 cursor-pointer"
+          >
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[18px] animate-pulse">graphic_eq</span>
+            </div>
+            <span>Admin Live Voice</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+          </button>
+
+          {/* Floating Global AI Operations Agent Launcher (Admin Exclusive) */}
           <button
             onClick={handleOpenAIAgent}
             title="Open Insight AI Operations Copilot (Admin Exclusive)"
@@ -390,6 +418,7 @@ export default function App() {
         onUpdateLearnedRules={handleUpdateLearnedRules}
         onNavigateToStorefront={() => setCurrentTab('home')}
         onNavigateToCheckout={() => setCurrentTab('checkout')}
+        onOpenLiveVoice={() => setShowLiveVoiceModal(true)}
         onNavigateTab={(tab) => {
           if (tab === 'receipts' || tab === 'orders' || tab === 'products' || tab === 'crm' || tab === 'vendors') {
             if (!isAdmin) {
@@ -398,6 +427,40 @@ export default function App() {
               setCurrentTab('ledger');
             }
           }
+        }}
+      />
+
+      {/* Real-time Gemini Live Voice Modal with direct store modification capabilities (Admin Exclusive) */}
+      <LiveVoiceModal
+        isOpen={showLiveVoiceModal}
+        onClose={() => setShowLiveVoiceModal(false)}
+        products={products}
+        onSaveProduct={handleSaveProduct}
+        onDeleteProduct={handleDeleteProduct}
+        onUpdateProducts={handleUpdateProducts}
+        paymentSettings={paymentSettings}
+        onUpdatePaymentSettings={handleUpdatePaymentSettings}
+        onNavigateTab={(tab, productId) => {
+          if (tab === 'home') {
+            setCurrentTab('home');
+          } else if (tab === 'checkout') {
+            if (productId) {
+              const target = products.find((p) => p.id === productId);
+              if (target) setSelectedProduct(target);
+            }
+            setCurrentTab('checkout');
+          } else if (tab === 'receipts' || tab === 'orders' || tab === 'products' || tab === 'crm' || tab === 'vendors') {
+            if (!isAdmin) {
+              setShowAdminLoginModal(true);
+            } else {
+              setCurrentTab('ledger');
+            }
+          }
+        }}
+        isAdmin={isAdmin}
+        onOpenAdminLogin={() => {
+          setShowLiveVoiceModal(false);
+          setShowAdminLoginModal(true);
         }}
       />
 

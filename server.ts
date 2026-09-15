@@ -1,7 +1,9 @@
 import express from 'express';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenAI } from '@google/genai';
+import { WebSocketServer, WebSocket } from 'ws';
+import { GoogleGenAI, LiveServerMessage, Modality, Type } from '@google/genai';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -22,7 +24,14 @@ function getGenAIClient(): GoogleGenAI | null {
     return null;
   }
   if (!genAIClient) {
-    genAIClient = new GoogleGenAI({ apiKey });
+    genAIClient = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
   }
   return genAIClient;
 }
@@ -580,6 +589,387 @@ RULES:
 });
 
 async function startServer() {
+  const server = http.createServer(app);
+
+  // Setup WebSocket Server for Live API (/api/live and /live)
+  const wss = new WebSocketServer({ noServer: true });
+
+  server.on('upgrade', (request, socket, head) => {
+    const url = new URL(request.url || '', `http://${request.headers.host || 'localhost'}`);
+    if (url.pathname === '/api/live' || url.pathname === '/live') {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    }
+  });
+
+  wss.on('connection', async (clientWs: WebSocket, request: http.IncomingMessage) => {
+    const url = new URL(request.url || '', `http://${request.headers.host || 'localhost'}`);
+    const initialVoice = url.searchParams.get('voice') || 'Zephyr';
+
+    console.log(`[Live API] Client WebSocket connected. Initial voice: ${initialVoice}`);
+
+    const ai = getGenAIClient();
+    if (!ai) {
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(JSON.stringify({ error: 'Gemini API key is not configured on the server.' }));
+        clientWs.close();
+      }
+      return;
+    }
+
+    let liveSession: any = null;
+    let isSessionOpen = false;
+
+    async function initializeLiveSession(voice: string, customSystemInstruction?: string) {
+      try {
+        const defaultSystemInstruction = `
+You are the interactive Live Voice Assistant and Operations Copilot for Insight Products (premium digital licenses and software subscriptions in Pakistan).
+Model: gemini-3.1-flash-live-preview (Gemini Live API).
+You converse smoothly in real-time in Roman Urdu, Urdu, or English. Match whatever language the user speaks.
+
+CRITICAL CAPABILITY - LIVE STORE MUTATIONS & ACTIONS:
+Whenever the user asks you via voice to edit a product, change prices, add a new license, delete a product, apply discounts, change payment/banking/wallet details, or navigate tabs, you MUST execute the appropriate function call (tool):
+- "edit_product": Change price, original price, duration, category, stock, or description of any product (e.g., "Canva Pro ki price 600 kardo", "ChatGPT Plus ko 1 Year kardo", "Adobe ko out of stock kardo").
+- "create_product": Add and list a new software product/license (e.g., "Ek naya product add karo Cursor AI 1200 Rs ka").
+- "delete_product": Remove a product from the store (e.g., "Netflix ko remove kardo").
+- "bulk_update_prices": Apply a percentage or fixed price change (e.g., "Sabhi AI products pe 10% discount lagado", "Har product ki price 100 barha do").
+- "update_payment_settings": Change bank account, JazzCash/EasyPaisa/Nayapay number, account titles, or WhatsApp contact.
+- "navigate_tab": Switch the active screen (e.g. "Mujhe inventory/products dikhao", "Receipts ledger kholo", "Checkout page par le jao").
+
+After receiving the tool execution result, inform the user verbally in a concise, natural, and polite spoken sentence that the action has been completed!
+`;
+
+        const liveTools: any[] = [
+          {
+            functionDeclarations: [
+              {
+                name: 'edit_product',
+                description:
+                  'Edit an existing product in Insight Products (change price, originalPrice, durationTag, name, category, stockStatus, description). Call this whenever user asks to edit a product, update price, change duration, etc.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    productNameOrId: {
+                      type: Type.STRING,
+                      description:
+                        'Exact or partial name/ID of the product to modify, e.g. "Canva Pro", "ChatGPT Plus", "prod-1"',
+                    },
+                    price: {
+                      type: Type.NUMBER,
+                      description: 'New selling price in PKR (e.g. 700)',
+                    },
+                    originalPrice: {
+                      type: Type.NUMBER,
+                      description: 'Original strike-through price in PKR (e.g. 1500)',
+                    },
+                    name: {
+                      type: Type.STRING,
+                      description: 'Updated name of the product if renaming',
+                    },
+                    durationTag: {
+                      type: Type.STRING,
+                      description: 'Duration badge (e.g. "1 Month", "1 Year", "Lifetime", "6 Months")',
+                    },
+                    category: {
+                      type: Type.STRING,
+                      description: 'Category: "ai", "design", "dev", "streaming", "security", "office"',
+                    },
+                    stockStatus: {
+                      type: Type.STRING,
+                      description: 'Stock status: "in_stock", "low_stock", or "out_of_stock"',
+                    },
+                    description: {
+                      type: Type.STRING,
+                      description: 'Updated short description of the product',
+                    },
+                  },
+                  required: ['productNameOrId'],
+                },
+              },
+              {
+                name: 'create_product',
+                description: 'Add and create a new digital license product in the store catalog.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    name: {
+                      type: Type.STRING,
+                      description: 'Name of the new product, e.g. "Cursor AI", "Claude 3.7 Pro", "Perplexity Pro"',
+                    },
+                    price: {
+                      type: Type.NUMBER,
+                      description: 'Selling price in PKR (e.g. 1200)',
+                    },
+                    category: {
+                      type: Type.STRING,
+                      description: 'Category: "ai", "design", "dev", "streaming", "security", "office"',
+                    },
+                    durationTag: {
+                      type: Type.STRING,
+                      description: 'Duration tag, e.g. "1 Month", "1 Year", "Lifetime"',
+                    },
+                    description: {
+                      type: Type.STRING,
+                      description: 'Brief product description and features',
+                    },
+                    originalPrice: {
+                      type: Type.NUMBER,
+                      description: 'Original strike-through price before discount',
+                    },
+                  },
+                  required: ['name', 'price'],
+                },
+              },
+              {
+                name: 'delete_product',
+                description: 'Delete or remove a product from the catalog by name or ID.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    productNameOrId: {
+                      type: Type.STRING,
+                      description: 'Name or ID of product to delete',
+                    },
+                  },
+                  required: ['productNameOrId'],
+                },
+              },
+              {
+                name: 'bulk_update_prices',
+                description:
+                  'Apply percentage or fixed price change to all products or a specific category (e.g. 10% discount on all AI tools, or increase all by 100 Rs).',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    percentageChange: {
+                      type: Type.NUMBER,
+                      description: 'Percentage discount or increase (e.g. -10 for 10% OFF, +15 for 15% increase)',
+                    },
+                    category: {
+                      type: Type.STRING,
+                      description: 'Target category ("ai", "design", "dev", "streaming", "security", "office", or "all")',
+                    },
+                    fixedAmountChange: {
+                      type: Type.NUMBER,
+                      description: 'Fixed amount adjustment in PKR (e.g. -200 or +100)',
+                    },
+                  },
+                },
+              },
+              {
+                name: 'update_payment_settings',
+                description:
+                  'Update store banking details, JazzCash/EasyPaisa wallet number, account titles, or WhatsApp support contact.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    bankName: { type: Type.STRING, description: 'Bank Name e.g. Meezan Bank, HBL' },
+                    accountTitle: { type: Type.STRING, description: 'Account holder title' },
+                    accountNumber: { type: Type.STRING, description: 'Bank Account Number' },
+                    iban: { type: Type.STRING, description: 'Bank IBAN' },
+                    walletName: { type: Type.STRING, description: 'Wallet name (e.g. JazzCash, EasyPaisa, Nayapay)' },
+                    walletTitle: { type: Type.STRING, description: 'Wallet account title' },
+                    walletNumber: { type: Type.STRING, description: 'Wallet account phone number' },
+                    whatsappSupportNumber: { type: Type.STRING, description: 'WhatsApp support number e.g. +923145338340' },
+                    enableBankTransfer: { type: Type.BOOLEAN, description: 'Enable or disable bank transfer rail' },
+                  },
+                },
+              },
+              {
+                name: 'navigate_tab',
+                description: 'Navigate the application screen or open a specific view for the user.',
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    tab: {
+                      type: Type.STRING,
+                      description:
+                        'Target tab: "home" (storefront catalog), "checkout", "orders", "products" (inventory), "receipts" (escrow ledger), "crm", "vendors"',
+                    },
+                    productId: {
+                      type: Type.STRING,
+                      description: 'Optional product ID to select for checkout',
+                    },
+                  },
+                  required: ['tab'],
+                },
+              },
+            ],
+          },
+        ];
+
+        liveSession = await ai!.live.connect({
+          model: 'gemini-3.1-flash-live-preview',
+          config: {
+            responseModalities: [Modality.AUDIO],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: voice || 'Zephyr',
+                },
+              },
+            },
+            systemInstruction: customSystemInstruction || defaultSystemInstruction,
+            tools: liveTools,
+            outputAudioTranscription: {},
+            inputAudioTranscription: {},
+          },
+          callbacks: {
+            onopen: () => {
+              isSessionOpen = true;
+              console.log('[Live API] Gemini Live session connected successfully with model gemini-3.1-flash-live-preview');
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(JSON.stringify({ type: 'session_ready', model: 'gemini-3.1-flash-live-preview' }));
+              }
+            },
+            onmessage: (message: LiveServerMessage) => {
+              if (clientWs.readyState !== WebSocket.OPEN) return;
+
+              // Check modelTurn audio and text parts
+              const parts = message.serverContent?.modelTurn?.parts || [];
+              for (const part of parts) {
+                if (part.inlineData?.data) {
+                  clientWs.send(JSON.stringify({ audio: part.inlineData.data }));
+                }
+                if (part.text) {
+                  clientWs.send(JSON.stringify({ text: part.text }));
+                }
+              }
+
+              // Check Tool Calls from Live API
+              if (message.toolCall) {
+                console.log('[Live API] Server received toolCall from Gemini Live:', JSON.stringify(message.toolCall));
+                clientWs.send(
+                  JSON.stringify({
+                    toolCall: message.toolCall,
+                  })
+                );
+              }
+
+              // Realtime Audio Transcriptions
+              const outText =
+                message.serverContent?.outputTranscription?.text ||
+                (message.serverContent as any)?.outputAudioTranscription?.text;
+              if (outText) {
+                clientWs.send(
+                  JSON.stringify({
+                    modelTranscript: outText,
+                  })
+                );
+              }
+
+              const inText =
+                message.serverContent?.inputTranscription?.text ||
+                (message.serverContent as any)?.inputAudioTranscription?.text;
+              if (inText) {
+                clientWs.send(
+                  JSON.stringify({
+                    userTranscript: inText,
+                  })
+                );
+              }
+
+              // Interruption signal
+              if (message.serverContent?.interrupted) {
+                clientWs.send(JSON.stringify({ interrupted: true }));
+              }
+
+              // Turn complete
+              if (message.serverContent?.turnComplete) {
+                clientWs.send(JSON.stringify({ turnComplete: true }));
+              }
+            },
+            onerror: (err: any) => {
+              console.error('[Live API] Gemini Live session error:', err);
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(JSON.stringify({ error: err?.message || 'Live session communication error' }));
+              }
+            },
+            onclose: () => {
+              console.log('[Live API] Gemini Live session closed');
+              isSessionOpen = false;
+              if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(JSON.stringify({ closed: true }));
+              }
+            },
+          },
+        });
+      } catch (err: any) {
+        console.error('[Live API] Failed to connect to Gemini Live session:', err);
+        if (clientWs.readyState === WebSocket.OPEN) {
+          clientWs.send(JSON.stringify({ error: err?.message || 'Failed to start Live session with gemini-3.1-flash-live-preview' }));
+        }
+      }
+    }
+
+    // Initialize session
+    await initializeLiveSession(initialVoice);
+
+    clientWs.on('message', async (rawData) => {
+      try {
+        const msg = JSON.parse(rawData.toString());
+
+        // Tool execution response from client back to Gemini Live
+        if (msg.type === 'tool_response' && msg.functionResponses && liveSession && isSessionOpen) {
+          console.log('[Live API] Forwarding tool_response to Gemini Live:', JSON.stringify(msg.functionResponses));
+          liveSession.sendToolResponse({
+            functionResponses: msg.functionResponses,
+          });
+          return;
+        }
+
+        // Re-configure voice / persona
+        if (msg.type === 'init') {
+          if (msg.voice && (!liveSession || msg.voice !== initialVoice)) {
+            if (liveSession && isSessionOpen) {
+              try {
+                liveSession.close();
+              } catch (e) {}
+            }
+            await initializeLiveSession(msg.voice, msg.systemInstruction);
+          }
+          return;
+        }
+
+        // Realtime audio input stream (16kHz Linear PCM)
+        if (msg.audio && liveSession && isSessionOpen) {
+          liveSession.sendRealtimeInput({
+            audio: {
+              data: msg.audio,
+              mimeType: 'audio/pcm;rate=16000',
+            },
+          });
+        }
+
+        // Typed text fallback
+        if (msg.text && liveSession && isSessionOpen) {
+          liveSession.send({
+            turns: [
+              {
+                role: 'user',
+                parts: [{ text: msg.text }],
+              },
+            ],
+            turnComplete: true,
+          });
+        }
+      } catch (err) {
+        console.error('[Live API] Error processing client WS message:', err);
+      }
+    });
+
+    clientWs.on('close', () => {
+      console.log('[Live API] Client WebSocket connection terminated');
+      if (liveSession) {
+        try {
+          liveSession.close();
+        } catch (e) {}
+        liveSession = null;
+      }
+    });
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
@@ -595,7 +985,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

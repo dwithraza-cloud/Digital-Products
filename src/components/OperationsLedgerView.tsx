@@ -23,6 +23,7 @@ interface OperationsLedgerViewProps {
   paymentSettings: PaymentSettings;
   onUpdatePaymentSettings: (newSettings: PaymentSettings) => void;
   onOpenAIAgent?: () => void;
+  onOpenLiveVoice?: () => void;
 }
 
 export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
@@ -40,6 +41,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
   paymentSettings,
   onUpdatePaymentSettings,
   onOpenAIAgent,
+  onOpenLiveVoice,
 }) => {
   const [adminSectionTab, setAdminSectionTab] = useState<'orders' | 'receipts' | 'products' | 'crm' | 'vendors' | 'payments'>('orders');
   const [showAIAgentModal, setShowAIAgentModal] = useState(false);
@@ -48,7 +50,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
   const [activeFilter, setActiveFilter] = useState<
     'all' | 'expired' | 'expiring-soon' | 'high-margin' | 'canva' | 'ai' | 'capcut'
   >('all');
-  const [selectedCustomerName, setSelectedCustomerName] = useState<string>('Ayesha Khan');
+  const [selectedCustomerName, setSelectedCustomerName] = useState<string>('');
   const [showCustomerDossierModal, setShowCustomerDossierModal] = useState(false);
   const [dateRange, setDateRange] = useState('All Time (Live Active P&L)');
 
@@ -81,9 +83,17 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
     const saved = localStorage.getItem('insight_customer_dossiers');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          // If stored data contains the old mock dossiers, purge them to empty
+          if (parsed['Ayesha Khan'] && parsed['Ayesha Khan'].phone === '+92 301 4452109') {
+            localStorage.setItem('insight_customer_dossiers', JSON.stringify({}));
+            return {};
+          }
+          return parsed;
+        }
       } catch {
-        return CUSTOMER_DOSSIERS;
+        return {};
       }
     }
     return CUSTOMER_DOSSIERS;
@@ -95,7 +105,17 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
     const saved = localStorage.getItem('insight_vendors');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // If stored data has old supplier spend totals, zero out spends for fresh start
+          const hasOldSpends = parsed.some((v: Vendor) => (v.supplierSpendPkr || 0) > 0);
+          if (hasOldSpends) {
+            const zeroed = parsed.map((v: Vendor) => ({ ...v, supplierSpendPkr: 0 }));
+            localStorage.setItem('insight_vendors', JSON.stringify(zeroed));
+            return zeroed;
+          }
+          return parsed;
+        }
       } catch {
         return VENDORS;
       }
@@ -197,21 +217,31 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
   const netMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0';
   const avgProfitPerOrder = orders.length > 0 ? Math.round(netProfit / orders.length) : 0;
 
-  // Selected Customer Dossier
-  const customerDossier: CustomerDossier = dossiers[selectedCustomerName] || {
-    name: selectedCustomerName,
-    phone: '+92 300 1234567',
-    email: 'customer@insightproducts.pk',
-    city: 'Lahore, Punjab',
-    role: 'Digital Creator',
-    reliability: '100% Reliable',
-    ltv: 2499,
-    completedOrders: 1,
-    disputes: 0,
-    orderHistory: [
-      { product: 'Insight Subscription', vendor: 'TechWholesale_TR (Rs 240)', cost: 240, profit: 759, date: 'Oct 28' },
-    ],
-  };
+  // Selected Customer Dossier Calculation
+  const effectiveCustomerName = selectedCustomerName || (orders.length > 0 ? orders[0].customerName : Object.keys(dossiers)[0] || '');
+  const matchingOrders = orders.filter((o) => o.customerName.toLowerCase() === effectiveCustomerName.toLowerCase());
+  const customerLtv = matchingOrders.reduce((sum, o) => sum + o.sellingPrice, 0);
+
+  const customerDossier: CustomerDossier | null = effectiveCustomerName
+    ? dossiers[effectiveCustomerName] || {
+        name: effectiveCustomerName,
+        phone: matchingOrders[0]?.customerPhone || '+92 300 0000000',
+        email: matchingOrders[0]?.customerEmail || `${effectiveCustomerName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
+        city: matchingOrders[0]?.customerCity || 'Pakistan',
+        role: matchingOrders[0]?.customerRole || 'Verified Client',
+        reliability: '100% Reliable',
+        ltv: customerLtv,
+        completedOrders: matchingOrders.length,
+        disputes: 0,
+        orderHistory: matchingOrders.map((o) => ({
+          product: o.productName,
+          vendor: `${o.vendorOrigin} (Rs ${o.vendorCost})`,
+          cost: o.vendorCost,
+          profit: o.sellingPrice - o.vendorCost,
+          date: o.timestamp,
+        })),
+      }
+    : null;
 
   // WhatsApp Renewal Reminder
   const handleSendWhatsAppRenewal = (order: Order) => {
@@ -671,6 +701,17 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
               <span>+ Add Product</span>
             </button>
 
+            {onOpenLiveVoice && (
+              <button
+                onClick={onOpenLiveVoice}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                title="Open Admin Real-Time Voice Copilot (Gemini Live API)"
+              >
+                <span className="material-symbols-outlined text-[17px] animate-pulse">graphic_eq</span>
+                <span>🎙️ Voice Copilot</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 if (onOpenAIAgent) {
@@ -679,7 +720,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
                   setShowAIAgentModal(true);
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-[#4648d4] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-[#0b1c30] via-[#4648d4] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
               title="Open AI Operations Copilot"
             >
               <span className="material-symbols-outlined text-[17px]">smart_toy</span>
@@ -838,29 +879,20 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
             <span className="text-[11px] font-bold text-[#767586] mr-1">Quick Search:</span>
             
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('Ayesha');
-                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
-              }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
-            >
-              <span>👤</span>
-              <span>Ayesha Khan</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('TX-1049281');
-                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
-              }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer font-mono"
-            >
-              <span>🆔</span>
-              <span>TX-1049281</span>
-            </button>
+            {orders.slice(0, 2).map((ord) => (
+              <button
+                key={ord.id}
+                type="button"
+                onClick={() => {
+                  setSearchQuery(ord.customerName);
+                  if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
+              >
+                <span>👤</span>
+                <span>{ord.customerName}</span>
+              </button>
+            ))}
 
             <button
               type="button"
@@ -871,7 +903,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
             >
               <span>⚡</span>
-              <span>ChatGPT Plus</span>
+              <span>ChatGPT</span>
             </button>
 
             <button
@@ -883,7 +915,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
             >
               <span>🎨</span>
-              <span>Canva Pro</span>
+              <span>Canva</span>
             </button>
 
             <button
@@ -895,7 +927,31 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
             >
               <span>🎬</span>
-              <span>CapCut Pro</span>
+              <span>CapCut</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('JazzCash');
+                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
+            >
+              <span>💳</span>
+              <span>JazzCash</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('Meezan');
+                if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
+            >
+              <span>🏦</span>
+              <span>Meezan</span>
             </button>
 
             {searchQuery && (
@@ -1402,9 +1458,9 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
                 {onResetOrders && (
                   <button
                     onClick={onResetOrders}
-                    className="text-[11px] text-[#767586] hover:text-[#0b1c30] underline"
+                    className="text-[11px] text-red-600 hover:text-red-800 font-bold hover:underline cursor-pointer"
                   >
-                    Reset Demo Baseline
+                    Clear All Sales (Zero Out)
                   </button>
                 )}
                 <button
@@ -1427,103 +1483,133 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
                     CUSTOMER DOSSIER CRM
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setEditingDossier(customerDossier)}
-                    className="p-1.5 bg-[#eff4ff] hover:bg-[#e4e0f5] text-[#4648d4] rounded-lg text-xs font-bold flex items-center gap-1"
-                    title="Edit this customer profile"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">edit</span>
-                    <span>Edit</span>
-                  </button>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                    {customerDossier.reliability}
-                  </span>
-                </div>
-              </div>
-
-              {/* Profile Header */}
-              <div className="flex items-center gap-3.5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#4648d4] to-[#6063ee] text-white font-headline font-bold text-xl flex items-center justify-center shadow-md shrink-0">
-                  {customerDossier.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
-                </div>
-                <div className="min-w-0">
-                  <h4 className="font-headline font-bold text-lg text-[#0b1c30] truncate">
-                    {customerDossier.name}
-                  </h4>
-                  <p className="text-xs text-[#767586] truncate">{customerDossier.role}</p>
-                  <p className="text-xs text-[#464554] font-medium truncate">{customerDossier.city}</p>
-                </div>
-              </div>
-
-              {/* Quick Metrics */}
-              <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#f8f9ff] border border-[#e5eeff] text-center">
-                <div>
-                  <div className="text-[10px] text-[#767586]">Lifetime LTV</div>
-                  <div className="font-headline font-bold text-sm text-[#0b1c30]">
-                    Rs {customerDossier.ltv.toLocaleString()}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-[#767586]">Orders</div>
-                  <div className="font-headline font-bold text-sm text-[#006c49]">
-                    {customerDossier.completedOrders} Done
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-[#767586]">Disputes</div>
-                  <div className="font-headline font-bold text-sm text-[#4648d4]">
-                    {customerDossier.disputes} Cases
-                  </div>
-                </div>
-              </div>
-
-              {/* Order History & Vendor Allocation */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#0b1c30]">
-                    Order History &amp; Key Allocation
-                  </span>
-                  <button
-                    onClick={() => setEditingDossier(customerDossier)}
-                    className="text-[10px] text-[#4648d4] hover:underline font-bold"
-                  >
-                    + Add / Edit History
-                  </button>
-                </div>
-
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {customerDossier.orderHistory.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl bg-[#f8f9ff] border border-[#eff4ff] text-xs flex items-center justify-between"
+                {customerDossier && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setEditingDossier(customerDossier)}
+                      className="p-1.5 bg-[#eff4ff] hover:bg-[#e4e0f5] text-[#4648d4] rounded-lg text-xs font-bold flex items-center gap-1"
+                      title="Edit this customer profile"
                     >
-                      <div>
-                        <div className="font-bold text-[#0b1c30]">{item.product}</div>
-                        <div className="text-[10px] text-[#767586]">{item.vendor}</div>
-                      </div>
-                      <div className="text-right font-mono">
-                        <div className="font-bold text-[#006c49]">+Rs {item.profit}</div>
-                        <div className="text-[10px] text-[#767586]">{item.date}</div>
+                      <span className="material-symbols-outlined text-[14px]">edit</span>
+                      <span>Edit</span>
+                    </button>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                      {customerDossier.reliability}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {customerDossier ? (
+                <>
+                  {/* Profile Header */}
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#4648d4] to-[#6063ee] text-white font-headline font-bold text-xl flex items-center justify-center shadow-md shrink-0">
+                      {customerDossier.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-headline font-bold text-lg text-[#0b1c30] truncate">
+                        {customerDossier.name}
+                      </h4>
+                      <p className="text-xs text-[#767586] truncate">{customerDossier.role}</p>
+                      <p className="text-xs text-[#464554] font-medium truncate">{customerDossier.city}</p>
+                    </div>
+                  </div>
+
+                  {/* Quick Metrics */}
+                  <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#f8f9ff] border border-[#e5eeff] text-center">
+                    <div>
+                      <div className="text-[10px] text-[#767586]">Lifetime LTV</div>
+                      <div className="font-headline font-bold text-sm text-[#0b1c30]">
+                        Rs {customerDossier.ltv.toLocaleString()}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <div>
+                      <div className="text-[10px] text-[#767586]">Orders</div>
+                      <div className="font-headline font-bold text-sm text-[#006c49]">
+                        {customerDossier.completedOrders} Done
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-[#767586]">Disputes</div>
+                      <div className="font-headline font-bold text-sm text-[#4648d4]">
+                        {customerDossier.disputes} Cases
+                      </div>
+                    </div>
+                  </div>
 
-              {/* WhatsApp Direct Chat */}
-              <a
-                href={`https://wa.me/${customerDossier.phone.replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-3 bg-[#006c49] hover:bg-[#00885d] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all"
-              >
-                <span className="material-symbols-outlined text-[18px]">chat</span>
-                <span>Message on WhatsApp ({customerDossier.phone})</span>
-              </a>
+                  {/* Order History & Vendor Allocation */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#0b1c30]">
+                        Order History &amp; Key Allocation
+                      </span>
+                      <button
+                        onClick={() => setEditingDossier(customerDossier)}
+                        className="text-[10px] text-[#4648d4] hover:underline font-bold cursor-pointer"
+                      >
+                        + Add / Edit History
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {customerDossier.orderHistory.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-gray-500 bg-[#f8f9ff] rounded-xl border border-dashed border-[#eff4ff]">
+                          No orders logged yet for this customer.
+                        </div>
+                      ) : (
+                        customerDossier.orderHistory.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3 rounded-xl bg-[#f8f9ff] border border-[#eff4ff] text-xs flex items-center justify-between"
+                          >
+                            <div>
+                              <div className="font-bold text-[#0b1c30]">{item.product}</div>
+                              <div className="text-[10px] text-[#767586]">{item.vendor}</div>
+                            </div>
+                            <div className="text-right font-mono">
+                              <div className="font-bold text-[#006c49]">+Rs {item.profit}</div>
+                              <div className="text-[10px] text-[#767586]">{item.date}</div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* WhatsApp Direct Chat */}
+                  <a
+                    href={`https://wa.me/${customerDossier.phone.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3 bg-[#006c49] hover:bg-[#00885d] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">chat</span>
+                    <span>Message on WhatsApp ({customerDossier.phone})</span>
+                  </a>
+                </>
+              ) : (
+                <div className="text-center py-8 px-4 bg-[#f8f9ff] rounded-2xl border border-dashed border-[#dce9ff] space-y-3">
+                  <span className="material-symbols-outlined text-gray-400 text-[36px]">
+                    person_search
+                  </span>
+                  <div>
+                    <h5 className="font-bold text-sm text-[#0b1c30]">No Client Selected</h5>
+                    <p className="text-xs text-[#767586] mt-1">
+                      Wipe complete: live sales ledger is reset to zero. Log a new order or click on a customer to view their CRM dossier.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowLogSaleModal(true)}
+                    className="px-4 py-2 bg-[#4648d4] hover:bg-[#6063ee] text-white font-bold text-xs rounded-xl shadow-xs"
+                  >
+                    + Log First Customer Sale
+                  </button>
+                </div>
+              )}
 
               {/* Margin Distribution */}
               <div className="pt-4 border-t border-[#eff4ff] space-y-3">
