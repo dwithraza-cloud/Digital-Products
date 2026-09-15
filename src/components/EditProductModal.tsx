@@ -4,9 +4,12 @@ import { Product } from '../types';
 interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  productToEdit: Product | null; // null means adding a new product
-  onSaveProduct: (savedProduct: Product) => void;
+  productToEdit?: Product | null; // null means adding a new product
+  product?: Product | null; // alias for productToEdit
+  onSaveProduct?: (savedProduct: Product) => void;
+  onSave?: (savedProduct: Product) => void; // alias for onSaveProduct
   onDeleteProduct?: (productId: string) => void;
+  onDelete?: (productId: string) => void; // alias for onDeleteProduct
 }
 
 const PRESET_IMAGES = [
@@ -115,10 +118,14 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   isOpen,
   onClose,
   productToEdit,
+  product,
   onSaveProduct,
+  onSave,
   onDeleteProduct,
+  onDelete,
 }) => {
-  const isEditMode = !!productToEdit;
+  const activeProduct = productToEdit !== undefined ? productToEdit : (product !== undefined ? product : null);
+  const isEditMode = Boolean(activeProduct && activeProduct.name && activeProduct.name.trim().length > 0);
 
   // Form Fields State
   const [name, setName] = useState('');
@@ -148,31 +155,31 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
   // Load product data on edit mode or populate defaults for new product
   useEffect(() => {
-    if (productToEdit) {
-      setName(productToEdit.name || '');
-      setShortName(productToEdit.shortName || '');
-      setPrice(productToEdit.price || 0);
-      setUnitCost(productToEdit.unitCost || 0);
-      setRefCode(productToEdit.ref || `#TX-${Math.floor(1000 + Math.random() * 9000)}`);
-      setCategory(productToEdit.category || 'ai');
-      setCategoryLabel(productToEdit.categoryLabel || 'AI Intelligence');
-      setTag(productToEdit.tag || 'Instant License');
-      setBadge(productToEdit.badge || 'Verified Pass');
-      setBadgeIcon(productToEdit.badgeIcon || 'verified');
-      setDesc(productToEdit.desc || '');
-      setLongDesc(productToEdit.longDesc || '');
-      setDurationTag(productToEdit.durationTag || '1-Month Access');
-      setTargetLabel(productToEdit.targetLabel || 'For Creators & Teams');
-      setDeliveryNote(productToEdit.deliveryNote || 'Delivered to WhatsApp & Email');
-      setVendorName(productToEdit.vendorName || 'DirectWholesale_PK');
-      setImageUrl(productToEdit.imageUrl || '');
-      setBrandLogo(productToEdit.brandLogo || '');
-      setIcon(productToEdit.icon || 'smart_toy');
-      setIconColor(productToEdit.iconColor || 'text-emerald-400');
-      setAccentGradient(productToEdit.accentGradient || 'from-emerald-950 via-slate-900 to-black');
+    if (activeProduct && activeProduct.name && activeProduct.name.trim().length > 0) {
+      setName(activeProduct.name || '');
+      setShortName(activeProduct.shortName || '');
+      setPrice(activeProduct.price || 0);
+      setUnitCost(activeProduct.unitCost ?? activeProduct.vendorCost ?? 0);
+      setRefCode(activeProduct.ref || `#TX-${Math.floor(1000 + Math.random() * 9000)}`);
+      setCategory(activeProduct.category || 'ai');
+      setCategoryLabel(activeProduct.categoryLabel || 'AI Intelligence');
+      setTag(activeProduct.tag || 'Instant License');
+      setBadge(activeProduct.badge || 'Verified Pass');
+      setBadgeIcon(activeProduct.badgeIcon || 'verified');
+      setDesc(activeProduct.desc || activeProduct.shortDesc || '');
+      setLongDesc(activeProduct.longDesc || activeProduct.desc || activeProduct.shortDesc || '');
+      setDurationTag(activeProduct.durationTag || '1-Month Access');
+      setTargetLabel(activeProduct.targetLabel || 'For Creators & Teams');
+      setDeliveryNote(activeProduct.deliveryNote || 'Delivered to WhatsApp & Email');
+      setVendorName(activeProduct.vendorName || 'DirectWholesale_PK');
+      setImageUrl(activeProduct.imageUrl || '');
+      setBrandLogo(activeProduct.brandLogo || '');
+      setIcon(activeProduct.icon || 'smart_toy');
+      setIconColor(activeProduct.iconColor || 'text-emerald-400');
+      setAccentGradient(activeProduct.accentGradient || 'from-emerald-950 via-slate-900 to-black');
       setFeaturesList(
-        productToEdit.features && productToEdit.features.length > 0
-          ? productToEdit.features
+        activeProduct.features && activeProduct.features.length > 0
+          ? activeProduct.features
           : [
               '100% Replacement Warranty included',
               'Fast delivery via WhatsApp and Email',
@@ -209,7 +216,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         '24/7 dedicated WhatsApp support desk',
       ]);
     }
-  }, [productToEdit, isOpen]);
+  }, [productToEdit, product, isOpen]);
 
   if (!isOpen) return null;
 
@@ -259,39 +266,47 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       return;
     }
 
-    const productId = productToEdit
-      ? productToEdit.id
+    const productId = (activeProduct && activeProduct.id)
+      ? activeProduct.id
       : name.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4);
 
     const savedProduct: Product = {
+      ...(activeProduct || {}),
       id: productId,
       name: name.trim(),
       shortName: shortName.trim() || name.trim().split(' ')[0],
       price: Number(price) || 0,
       formattedPrice: `Rs ${(Number(price) || 0).toLocaleString()}`,
-      ref: refCode.trim() || '#TX-PROD',
+      ref: refCode.trim() || (activeProduct?.ref || '#TX-PROD'),
       category,
       categoryLabel: categoryLabel.trim() || 'Software & Tools',
       tag: tag.trim() || 'Active License',
       badge: badge.trim() || '⚡ Verified',
       badgeIcon: badgeIcon.trim() || 'verified',
-      desc: desc.trim() || 'Official digital subscription pass.',
+      desc: desc.trim() || longDesc.trim() || 'Official digital subscription pass.',
+      shortDesc: desc.trim() || 'Instant digital credentials with warranty',
       longDesc: longDesc.trim() || desc.trim(),
       icon,
       targetLabel: targetLabel.trim() || 'For Digital Creators',
       deliveryNote: deliveryNote.trim() || 'Instant Delivery via WhatsApp',
-      accentGradient,
-      iconColor,
+      accentGradient: accentGradient || activeProduct?.accentGradient || 'from-[#4648d4] to-[#6063ee]',
+      iconColor: iconColor || activeProduct?.iconColor || 'text-emerald-400',
       durationTag: durationTag.trim() || '1-Month',
       vendorName: vendorName.trim() || 'DirectWholesale_PK',
       unitCost: Number(unitCost) || 0,
+      vendorCost: Number(unitCost) || 0,
       imageUrl: imageUrl.trim() || undefined,
       brandLogo: brandLogo.trim().toUpperCase() || undefined,
-      features: featuresList,
-      isActive: true,
+      features: featuresList.length > 0 ? featuresList : (activeProduct?.features || ['100% Replacement Warranty', 'Fast delivery via WhatsApp']),
+      isActive: activeProduct?.isActive !== undefined ? activeProduct.isActive : true,
     };
 
-    onSaveProduct(savedProduct);
+    if (onSaveProduct) {
+      onSaveProduct(savedProduct);
+    }
+    if (onSave) {
+      onSave(savedProduct);
+    }
     onClose();
   };
 
@@ -308,7 +323,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
             <div>
               <h2 className="font-headline font-bold text-base sm:text-lg text-white">
-                {isEditMode ? `Edit Product: ${productToEdit.name}` : 'Add New Digital Product to Store'}
+                {isEditMode ? `Edit Product: ${activeProduct?.name}` : 'Add New Digital Product to Store'}
               </h2>
               <p className="text-xs text-white/70">
                 Configure pricing, descriptions, wholesale cost, and product cover images.
@@ -777,16 +792,18 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
           {/* Modal Actions Footer */}
           <div className="pt-4 border-t border-[#e5eeff] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-            {isEditMode && onDeleteProduct ? (
+            {isEditMode && (onDeleteProduct || onDelete) ? (
               <button
                 type="button"
                 onClick={() => {
+                  if (!activeProduct) return;
                   if (
                     window.confirm(
-                      `Are you sure you want to completely delete "${productToEdit.name}" from the store?`
+                      `Are you sure you want to completely delete "${activeProduct.name}" from the store?`
                     )
                   ) {
-                    onDeleteProduct(productToEdit.id);
+                    if (onDeleteProduct) onDeleteProduct(activeProduct.id);
+                    if (onDelete) onDelete(activeProduct.id);
                     onClose();
                   }
                 }}

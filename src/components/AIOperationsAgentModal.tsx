@@ -92,11 +92,17 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
     setIsLoading(true);
 
     try {
+      const historyPayload = messages.slice(-8).map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }));
+
       const response = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: textToSend,
+          history: historyPayload,
           context: {
             products: products.map((p) => ({
               id: p.id,
@@ -139,29 +145,40 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
           const parsedAction = JSON.parse(actionMatch[1]);
           rawReply = rawReply.replace(/```action[\s\S]*?```/g, '').trim();
 
-          // Execute action on application state
+          // Execute action on application state ONLY if strictly valid
           if (parsedAction.type === 'UPDATE_PRODUCT_PRICE') {
             const { productId, productName, newPrice, newCost } = parsedAction.payload;
-            const updated = products.map((p) => {
-              if (
-                p.id === productId ||
-                (productName && p.name.toLowerCase().includes(productName.toLowerCase()))
-              ) {
-                return {
-                  ...p,
-                  price: newPrice !== undefined ? Number(newPrice) : p.price,
-                  formattedPrice: newPrice !== undefined ? `Rs ${Number(newPrice).toLocaleString()}` : p.formattedPrice,
-                  unitCost: newCost !== undefined ? Number(newCost) : p.unitCost,
-                  vendorCost: newCost !== undefined ? Number(newCost) : p.vendorCost,
+            if ((productId || productName) && newPrice !== undefined && Number(newPrice) > 0) {
+              let didFindMatch = false;
+              let updatedProdName = '';
+              const updated = products.map((p) => {
+                const matchesId = productId && p.id.toLowerCase() === productId.toLowerCase();
+                const matchesName = productName && (
+                  p.name.toLowerCase().includes(productName.toLowerCase()) ||
+                  (p.shortName && p.shortName.toLowerCase().includes(productName.toLowerCase()))
+                );
+                if (matchesId || matchesName) {
+                  didFindMatch = true;
+                  updatedProdName = p.name;
+                  return {
+                    ...p,
+                    price: Number(newPrice),
+                    formattedPrice: `Rs ${Number(newPrice).toLocaleString()}`,
+                    unitCost: newCost !== undefined ? Number(newCost) : p.unitCost,
+                    vendorCost: newCost !== undefined ? Number(newCost) : p.vendorCost,
+                  };
+                }
+                return p;
+              });
+
+              if (didFindMatch) {
+                onUpdateProducts(updated);
+                actionExecuted = {
+                  type: 'UPDATE_PRODUCT_PRICE',
+                  description: `${updatedProdName} price updated to Rs ${Number(newPrice).toLocaleString()}`,
                 };
               }
-              return p;
-            });
-            onUpdateProducts(updated);
-            actionExecuted = {
-              type: 'UPDATE_PRODUCT_PRICE',
-              description: `Product price updated to Rs ${newPrice?.toLocaleString() || ''}`,
-            };
+            }
           } else if (parsedAction.type === 'NAVIGATE_TAB') {
             const { tab } = parsedAction.payload;
             if (tab) {
@@ -202,16 +219,18 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
             };
           } else if (parsedAction.type === 'DELETE_PRODUCT') {
             const { productId, productName } = parsedAction.payload;
-            const filtered = products.filter(
-              (p) =>
-                p.id !== productId &&
-                (!productName || !p.name.toLowerCase().includes(productName.toLowerCase()))
-            );
-            onUpdateProducts(filtered);
-            actionExecuted = {
-              type: 'DELETE_PRODUCT',
-              description: `Product removed from active catalog`,
-            };
+            if (productId || productName) {
+              const filtered = products.filter(
+                (p) =>
+                  p.id !== productId &&
+                  (!productName || !p.name.toLowerCase().includes(productName.toLowerCase()))
+              );
+              onUpdateProducts(filtered);
+              actionExecuted = {
+                type: 'DELETE_PRODUCT',
+                description: `Product removed from active catalog`,
+              };
+            }
           } else if (parsedAction.type === 'UPDATE_PAYMENT_SETTINGS') {
             const updatedSettings = {
               ...paymentSettings,
@@ -243,13 +262,22 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
       let fallbackText = '';
       let actionExecuted: { type: string; description: string } | undefined = undefined;
 
-      if (lower.includes('price') && (lower.includes('kardo') || lower.includes('change') || lower.includes('update') || lower.includes('set'))) {
-        const numMatch = textToSend.match(/(\d+[\d,]*)/);
-        const newPrice = numMatch ? parseInt(numMatch[1].replace(/,/g, ''), 10) : 0;
+      const isQuestion =
+        lower.includes('?') ||
+        /\b(kya|kitna|kitni|kitnay|kaise|rates|batao|check|list|what|how)\b/i.test(lower);
+
+      const isExplicitPriceCommand =
+        !isQuestion &&
+        /\b(price|rate|keemat)\b/i.test(lower) &&
+        /\b(kardo|kar do|set|change|update|badal do)\b/i.test(lower);
+
+      if (isExplicitPriceCommand) {
+        const numMatch = textToSend.match(/(?:rs\.?|pkr)?\s*(\d{2,6})\b/i);
+        const newPrice = numMatch ? parseInt(numMatch[1], 10) : 0;
         
-        let targetProd = products[0];
+        let targetProd: Product | null = null;
         for (const p of products) {
-          if (lower.includes(p.name.toLowerCase()) || lower.includes(p.shortName.toLowerCase())) {
+          if (lower.includes(p.name.toLowerCase()) || (p.shortName && lower.includes(p.shortName.toLowerCase()))) {
             targetProd = p;
             break;
           }
@@ -257,7 +285,7 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
 
         if (targetProd && newPrice > 0) {
           const updated = products.map((p) =>
-            p.id === targetProd.id
+            p.id === targetProd!.id
               ? { ...p, price: newPrice, formattedPrice: `Rs ${newPrice.toLocaleString()}` }
               : p
           );
@@ -267,8 +295,10 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
             type: 'UPDATE_PRODUCT_PRICE',
             description: `${targetProd.name} price changed to Rs ${newPrice.toLocaleString()}`,
           };
+        } else if (!targetProd) {
+          fallbackText = `Aap kis product ki price change karna chahtay hain? Baraye meharbani product ka naam batayein (e.g. *"Canva Pro ki price 699 kardo"*).`;
         } else {
-          fallbackText = `Aap kis product ki price update karna chahtay hain? Example: *"Canva Pro ki price 699 kardo"*`;
+          fallbackText = `Mainay **${targetProd.name}** ko pehchan liya hai. Nayi price kitni set karni hai?`;
         }
       } else if (lower.includes('profit') || lower.includes('revenue') || lower.includes('sale') || lower.includes('kamai')) {
         fallbackText = `📊 **Live Financial Overview:**\n- **Gross Revenue:** Rs ${totalRevenue.toLocaleString()}\n- **Wholesale COGS:** Rs ${totalCOGS.toLocaleString()}\n- **Net Profit:** Rs ${netProfit.toLocaleString()} (*${netMargin}% Margin*)\n- **Active Orders:** ${orders.length} verified orders in ledger.`;

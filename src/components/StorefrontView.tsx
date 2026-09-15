@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Product, PaymentSettings } from '../types';
 import { PRODUCTS } from '../data/mockData';
+import { HeroDigitalVaultMockup } from './HeroDigitalVaultMockup';
 
 interface StorefrontViewProps {
   products?: Product[];
@@ -64,7 +65,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
         <div className="absolute top-48 right-10 w-[300px] h-[300px] bg-[#6ffbbe]/10 rounded-full blur-2xl pointer-events-none -z-10" />
 
         <div className="max-w-[1280px] mx-auto px-5 lg:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
             {/* Left Hero Text */}
             <div className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#eff4ff] border border-[#dce9ff] rounded-full shadow-sm">
@@ -92,7 +93,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#4648d4] hover:bg-[#6063ee] text-white font-bold rounded-2xl shadow-[0_8px_20px_rgba(70,72,212,0.28)] transition-all hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <span className="material-symbols-outlined text-[20px]">explore</span>
-                  <span>Explore 10 Verified Products</span>
+                  <span>Explore {activeProducts.length} Verified Products</span>
                 </a>
 
                 <a
@@ -127,128 +128,22 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
               </div>
             </div>
 
-            {/* Right Hero Interactive Mockup */}
+            {/* Right Hero: Digital Vault Mockup with 3D Spheres & Floating Badges */}
             <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-md rounded-3xl bg-white p-6 shadow-[0_20px_50px_rgba(11,28,48,0.08)] border border-[#e5eeff]">
-                {/* Mockup Header */}
-                <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#eff4ff]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-rose-400" />
-                    <div className="w-3 h-3 rounded-full bg-amber-400" />
-                    <div className="w-3 h-3 rounded-full bg-emerald-400" />
-                    <span className="ml-2 text-xs font-mono font-medium text-[#767586]">
-                      lumina-escrow-delivery.app
-                    </span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
-                    OCR LIVE
-                  </span>
-                </div>
-
-                {/* Active Simulated Item */}
-                <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-[#eff4ff] border border-[#dce9ff] flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden border border-emerald-300 shadow-sm relative shrink-0 bg-[#064e3b]">
-                        {PRODUCTS.find((p) => p.id === 'chatgpt')?.imageUrl ? (
-                          <img
-                            src={PRODUCTS.find((p) => p.id === 'chatgpt')?.imageUrl}
-                            alt="ChatGPT Plus"
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-white">
-                            <span className="material-symbols-outlined text-[22px]">psychology</span>
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-headline font-bold text-sm text-[#0b1c30]">
-                          ChatGPT Plus (GPT-4o)
-                        </div>
-                        <div className="text-xs text-[#767586]">Order #INS-22105 • PKR 1,499</div>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-[#006c49] bg-emerald-100/70 px-2.5 py-1 rounded-lg">
-                      Paid
-                    </span>
-                  </div>
-
-                  {/* Verification Pipeline Simulation */}
-                  <div className="p-4 rounded-2xl bg-white border border-[#e5eeff] space-y-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#0b1c30] flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[16px] text-[#4648d4]">
-                          sync_saved_locally
-                        </span>
-                        Meezan Bank OCR Scan
-                      </span>
-                      <span className="font-mono font-bold text-[#006c49]">100% Match</span>
-                    </div>
-
-                    <div className="w-full h-2 bg-[#eff4ff] rounded-full overflow-hidden">
-                      <div className="w-full h-full bg-gradient-to-r from-[#4648d4] to-emerald-500 rounded-full" />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-[#767586]">
-                      <span>Slip: TRX-78210344 verified</span>
-                      <span>Latency: 1.4s</span>
-                    </div>
-                  </div>
-
-                  {/* Dispatch Details */}
-                  <div className="p-3.5 rounded-2xl bg-[#f8f9ff] border border-[#dce9ff] flex items-center gap-3">
-                    <span className="material-symbols-outlined text-[#006c49] text-[20px]">
-                      mark_chat_read
-                    </span>
-                    <div className="text-xs">
-                      <span className="font-semibold text-[#0b1c30]">Direct License Handshake:</span>
-                      <p className="text-[#464554]">
-                        Activation link dispatched to customer WhatsApp (+92 321 ...)
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Quick CTAs on the card */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <a
-                      href="#catalog"
-                      className="flex-1 py-2.5 px-3 bg-[#4648d4] hover:bg-[#6063ee] text-white text-xs font-bold rounded-xl text-center transition-colors shadow-sm"
-                    >
-                      Browse 10 Products
-                    </a>
-                    {isAdmin ? (
-                      <button
-                        onClick={onNavigateToLedger}
-                        className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl transition-colors border border-emerald-200"
-                      >
-                        Admin CRM
-                      </button>
-                    ) : (
-                      <button
-                        onClick={onOpenAdminLogin}
-                        className="py-2.5 px-3 bg-[#eff4ff] hover:bg-[#e5eeff] text-[#464554] hover:text-[#4648d4] text-xs font-bold rounded-xl transition-colors border border-[#dce9ff] flex items-center gap-1"
-                        title="Admin Access"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">lock</span>
-                        <span>Admin</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Floating Micro Badge */}
-                <div className="absolute -bottom-4 -left-4 bg-white px-3 py-2 rounded-2xl shadow-lg border border-[#e5eeff] flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[16px]">verified</span>
-                  </div>
-                  <div className="text-[11px]">
-                    <span className="font-bold text-[#0b1c30] block leading-tight">1-Link &amp; Meezan</span>
-                    <span className="text-[#767586] text-[10px]">Instant Bank Reconciliation</span>
-                  </div>
-                </div>
-              </div>
+              <HeroDigitalVaultMockup
+                products={activeProducts}
+                onSelectProduct={(prod) => {
+                  onSelectProduct(prod);
+                  onNavigateToCheckout();
+                }}
+                onNavigateToCatalog={() => {
+                  const el = document.getElementById('catalog');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                isAdmin={isAdmin}
+                onNavigateToLedger={onNavigateToLedger}
+                onOpenAdminLogin={onOpenAdminLogin}
+              />
             </div>
           </div>
         </div>
@@ -390,7 +285,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
                     </h3>
 
                     <p className="text-xs text-[#464554] line-clamp-2 leading-relaxed">
-                      {product.longDesc}
+                      {product.desc || product.longDesc || product.shortDesc || 'Instant digital subscription pass with warranty.'}
                     </p>
                   </div>
                 </div>

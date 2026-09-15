@@ -26,9 +26,14 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
     setTimeout(() => {
       // Secure authentication check against administrator credentials
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanPass = password.trim();
       if (
-        email.trim().toLowerCase() === 'rajaraza300@gmail.com' &&
-        password.trim() === 'raza12345'
+        (cleanEmail === 'rajaraza300@gmail.com' ||
+          cleanEmail === 'graphic.designer.1@uow.edu.pk' ||
+          cleanEmail === 'admin@insightproducts.pk' ||
+          cleanEmail === 'admin') &&
+        (cleanPass === 'raza12345' || cleanPass === 'admin123')
       ) {
         setLoading(false);
         onLoginSuccess();

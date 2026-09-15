@@ -2244,9 +2244,12 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
       <EditProductModal
         isOpen={!!editingProduct}
         product={editingProduct}
+        productToEdit={editingProduct}
         onClose={() => setEditingProduct(null)}
         onSave={handleSaveProductInternal}
+        onSaveProduct={handleSaveProductInternal}
         onDelete={(prodId) => handleDeleteProductInternal(prodId)}
+        onDeleteProduct={(prodId) => handleDeleteProductInternal(prodId)}
       />
 
       {/* Payment Screenshot Proof Inspection Modal */}

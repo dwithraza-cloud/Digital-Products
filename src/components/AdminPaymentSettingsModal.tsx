@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PaymentSettings } from '../types';
 import { DEFAULT_PAYMENT_SETTINGS } from '../data/mockData';
 
@@ -17,6 +17,12 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
 }) => {
   const [formData, setFormData] = useState<PaymentSettings>({ ...currentSettings });
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && currentSettings) {
+      setFormData({ ...currentSettings });
+    }
+  }, [isOpen, currentSettings]);
 
   if (!isOpen) return null;
 
