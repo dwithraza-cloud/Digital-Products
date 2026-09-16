@@ -20,7 +20,6 @@ interface AIOperationsAgentModalProps {
   onNavigateTab: (tab: 'all' | 'orders' | 'products' | 'receipts' | 'crm' | 'vendors') => void;
   onNavigateToStorefront?: () => void;
   onNavigateToCheckout?: () => void;
-  onOpenLiveVoice?: () => void;
 }
 
 interface Message {
@@ -58,14 +57,15 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
   onNavigateTab,
   onNavigateToStorefront,
   onNavigateToCheckout,
-  onOpenLiveVoice,
 }) => {
   const [activeView, setActiveView] = useState<'chat' | 'brain'>('chat');
+  const [lastDiscussedProduct, setLastDiscussedProduct] = useState<{ id: string; name: string; price: number } | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       sender: 'agent',
-      text: `Assalam-o-Alaikum! 🤖 Main **Insight Autonomous Store Copilot** hoon.\n\nMain aapki **poori website** ko control karta hoon aur waqt ke sath aapki har baat se **seekhta (train hota)** rehta hoon!\n\n🧠 **Aap mujhay train kar saktay hain:**\n• *"Yaad rakhna, students ko 10% discount dena hai"*\n• *"Delivery policy note karlo: 10 minutes max"*\n\n⚡ **Pori website control karein:**\n• *"Canva Pro ki price 699 kardo"*\n• *"Order INS-91024 verify kardo"*\n• *"Meezan Bank account number badal do"*\n• *"Payment slips gallery kholo"*\n• *"Aaj ka total net profit aur margin batao"*`,
+      text: `Assalam-o-Alaikum! 🤖 Main aapka **Admin AI Agent** hoon.\n\nMain aapke store ko text chat ke zariye smartly manage karta hoon. Aap aam Roman Urdu, Urdu ya English ma commands dein:\n\n• *"Canva 900 krdo"*\n• *"Ye out of stock krdo"*\n• *"Netflix aur canva dono 500 increase kro"*\n• *"Order verify krdo"*\n• *"10% kam kro"*\n• *"Profit hisaab batao"*\n• *"Yaad rakhna students ko 10% off dena hai"*`,
       timestamp: 'Just now',
     },
   ]);
@@ -251,6 +251,8 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
           message: textToSend,
           history: historyPayload,
           context: {
+            lastDiscussedProduct,
+            pendingConfirmation,
             products: products.map((p) => ({
               id: p.id,
               name: p.name,
@@ -297,40 +299,82 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
 
       if (actionMatch && actionMatch[1]) {
         try {
-          const parsedAction = JSON.parse(actionMatch[1]);
+          const parsedData = JSON.parse(actionMatch[1]);
           rawReply = rawReply.replace(/```action[\s\S]*?```/g, '').trim();
 
-          // 1. LEARN_RULE Action
-          if (parsedAction.type === 'LEARN_RULE') {
-            const { title, instruction, category } = parsedAction.payload;
-            if (instruction) {
-              const newRule: LearnedMemoryRule = {
-                id: `rule-ai-${Date.now()}`,
-                category: category || 'general',
-                title: title || 'Trained Custom Instruction',
-                instruction: instruction,
-                learnedAt: 'Learned from Chat',
-                source: 'chat_conversation',
-                active: true,
-              };
-              onUpdateLearnedRules([newRule, ...learnedRules]);
-              learningLearned = {
-                title: newRule.title,
-                instruction: newRule.instruction,
-                category: newRule.category,
-              };
-              actionExecuted = {
-                type: 'LEARN_RULE',
-                description: `Trained new store knowledge: "${newRule.title}"`,
-              };
+          const actionsList = Array.isArray(parsedData.actions)
+            ? parsedData.actions
+            : [parsedData];
+
+          for (const item of actionsList) {
+            // 1. LEARN_RULE Action
+            if (item.type === 'LEARN_RULE') {
+              const { title, instruction, category } = item.payload || {};
+              if (instruction) {
+                const newRule: LearnedMemoryRule = {
+                  id: `rule-ai-${Date.now()}`,
+                  category: category || 'general',
+                  title: title || 'Trained Custom Instruction',
+                  instruction: instruction,
+                  learnedAt: 'Learned from Chat',
+                  source: 'chat_conversation',
+                  active: true,
+                };
+                onUpdateLearnedRules([newRule, ...learnedRules]);
+                learningLearned = {
+                  title: newRule.title,
+                  instruction: newRule.instruction,
+                  category: newRule.category,
+                };
+                actionExecuted = {
+                  type: 'LEARN_RULE',
+                  description: `Trained new store knowledge: "${newRule.title}"`,
+                };
+              }
             }
-          }
-          // 2. UPDATE_PRODUCT_PRICE Action
-          else if (parsedAction.type === 'UPDATE_PRODUCT_PRICE') {
-            const { productId, productName, newPrice, newCost } = parsedAction.payload;
-            if ((productId || productName) && newPrice !== undefined && Number(newPrice) > 0) {
+            // 2. UPDATE_PRODUCT_PRICE Action
+            else if (item.type === 'UPDATE_PRODUCT_PRICE') {
+              const { productId, productName, newPrice, newCost } = item.payload || {};
+              if ((productId || productName) && newPrice !== undefined && Number(newPrice) > 0) {
+                let didFindMatch = false;
+                let updatedProdName = '';
+                let updatedId = '';
+                const updated = products.map((p) => {
+                  const matchesId = productId && p.id.toLowerCase() === productId.toLowerCase();
+                  const matchesName = productName && (
+                    p.name.toLowerCase().includes(productName.toLowerCase()) ||
+                    (p.shortName && p.shortName.toLowerCase().includes(productName.toLowerCase()))
+                  );
+                  if (matchesId || matchesName) {
+                    didFindMatch = true;
+                    updatedProdName = p.name;
+                    updatedId = p.id;
+                    return {
+                      ...p,
+                      price: Number(newPrice),
+                      formattedPrice: `Rs ${Number(newPrice).toLocaleString()}`,
+                      unitCost: newCost !== undefined ? Number(newCost) : p.unitCost,
+                      vendorCost: newCost !== undefined ? Number(newCost) : p.vendorCost,
+                    };
+                  }
+                  return p;
+                });
+
+                if (didFindMatch) {
+                  onUpdateProducts(updated);
+                  setLastDiscussedProduct({ id: updatedId, name: updatedProdName, price: Number(newPrice) });
+                  actionExecuted = {
+                    type: 'UPDATE_PRODUCT_PRICE',
+                    description: `${updatedProdName} price updated to PKR ${Number(newPrice).toLocaleString()}`,
+                  };
+                }
+              }
+            }
+            // 3. UPDATE_PRODUCT_STOCK Action
+            else if (item.type === 'UPDATE_PRODUCT_STOCK') {
+              const { productId, productName, inStock } = item.payload || {};
               let didFindMatch = false;
-              let updatedProdName = '';
+              let targetName = '';
               const updated = products.map((p) => {
                 const matchesId = productId && p.id.toLowerCase() === productId.toLowerCase();
                 const matchesName = productName && (
@@ -339,14 +383,8 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
                 );
                 if (matchesId || matchesName) {
                   didFindMatch = true;
-                  updatedProdName = p.name;
-                  return {
-                    ...p,
-                    price: Number(newPrice),
-                    formattedPrice: `Rs ${Number(newPrice).toLocaleString()}`,
-                    unitCost: newCost !== undefined ? Number(newCost) : p.unitCost,
-                    vendorCost: newCost !== undefined ? Number(newCost) : p.vendorCost,
-                  };
+                  targetName = p.name;
+                  return { ...p, isActive: inStock !== false };
                 }
                 return p;
               });
@@ -354,110 +392,118 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
               if (didFindMatch) {
                 onUpdateProducts(updated);
                 actionExecuted = {
-                  type: 'UPDATE_PRODUCT_PRICE',
-                  description: `${updatedProdName} price updated to Rs ${Number(newPrice).toLocaleString()}`,
+                  type: 'UPDATE_PRODUCT_STOCK',
+                  description: `${targetName} marked as ${inStock ? 'Available' : 'Out of Stock'}`,
                 };
               }
             }
-          }
-          // 3. NAVIGATE_TAB Action
-          else if (parsedAction.type === 'NAVIGATE_TAB') {
-            const { tab } = parsedAction.payload;
-            if (tab === 'storefront') {
-              if (onNavigateToStorefront) onNavigateToStorefront();
-              else onNavigateTab('all');
-            } else if (tab === 'checkout') {
-              if (onNavigateToCheckout) onNavigateToCheckout();
-              else onNavigateTab('all');
-            } else if (tab) {
-              onNavigateTab(tab);
-            }
-            actionExecuted = {
-              type: 'NAVIGATE_TAB',
-              description: `Navigated to ${String(tab).toUpperCase()} view`,
-            };
-          }
-          // 4. ADD_PRODUCT Action
-          else if (parsedAction.type === 'ADD_PRODUCT') {
-            const { name, price, vendorCost, category, desc, durationTag } = parsedAction.payload;
-            const newProd: Product = {
-              id: `prod-ai-${Date.now()}`,
-              name: name || 'Custom Plan',
-              shortName: name || 'Custom Plan',
-              price: Number(price) || 2000,
-              formattedPrice: `Rs ${(Number(price) || 2000).toLocaleString()}`,
-              ref: `AI-${Math.floor(100 + Math.random() * 900)}`,
-              category: category || 'ai',
-              categoryLabel: (category || 'ai').toUpperCase(),
-              tag: '⚡ AI Added',
-              badge: 'Instant Key',
-              badgeIcon: 'bolt',
-              desc: desc || 'Official premium digital software subscription.',
-              longDesc: desc || 'Official licensed software subscription with private credentials and replacement warranty.',
-              durationTag: durationTag || '1-Month Access',
-              vendorName: 'Direct Wholesaler',
-              unitCost: Number(vendorCost) || 1000,
-              vendorCost: Number(vendorCost) || 1000,
-              imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80',
-              features: ['Private Credentials', 'Instant Escrow Delivery', 'Full Replacement Warranty'],
-              isActive: true,
-            };
-            onUpdateProducts([newProd, ...products]);
-            actionExecuted = {
-              type: 'ADD_PRODUCT',
-              description: `Added "${newProd.name}" (Rs ${newProd.price.toLocaleString()}) to catalog`,
-            };
-          }
-          // 5. DELETE_PRODUCT Action
-          else if (parsedAction.type === 'DELETE_PRODUCT') {
-            const { productId, productName } = parsedAction.payload;
-            if (productId || productName) {
-              const filtered = products.filter(
-                (p) =>
-                  p.id !== productId &&
-                  (!productName || !p.name.toLowerCase().includes(productName.toLowerCase()))
-              );
-              onUpdateProducts(filtered);
+            // 4. NAVIGATE_TAB Action
+            else if (item.type === 'NAVIGATE_TAB') {
+              const { tab } = item.payload || {};
+              if (tab === 'storefront') {
+                if (onNavigateToStorefront) onNavigateToStorefront();
+                else onNavigateTab('all');
+              } else if (tab === 'checkout') {
+                if (onNavigateToCheckout) onNavigateToCheckout();
+                else onNavigateTab('all');
+              } else if (tab) {
+                onNavigateTab(tab);
+              }
               actionExecuted = {
-                type: 'DELETE_PRODUCT',
-                description: `Product removed from active catalog`,
+                type: 'NAVIGATE_TAB',
+                description: `Navigated to ${String(tab).toUpperCase()} view`,
               };
             }
-          }
-          // 6. UPDATE_PAYMENT_SETTINGS Action
-          else if (parsedAction.type === 'UPDATE_PAYMENT_SETTINGS') {
-            const updatedSettings = {
-              ...paymentSettings,
-              ...parsedAction.payload,
-            };
-            onUpdatePaymentSettings(updatedSettings);
-            actionExecuted = {
-              type: 'UPDATE_PAYMENT_SETTINGS',
-              description: `Payment rails & bank account credentials updated`,
-            };
-          }
-          // 7. VERIFY_ORDER Action
-          else if (parsedAction.type === 'VERIFY_ORDER') {
-            const { orderRef, orderId } = parsedAction.payload;
-            let matched = false;
-            const updatedOrders = orders.map((o) => {
-              const match = (orderId && o.id === orderId) || (orderRef && (o.refNumber.includes(orderRef) || o.transactionId.includes(orderRef)));
-              if (match || (!orderId && !orderRef && o.status === 'Awaiting Slip')) {
-                matched = true;
-                return { ...o, status: 'Verified' as const };
+            // 5. ADD_PRODUCT Action
+            else if (item.type === 'ADD_PRODUCT') {
+              const { name, price, vendorCost, category, desc, durationTag } = item.payload || {};
+              const newProd: Product = {
+                id: `prod-ai-${Date.now()}`,
+                name: name || 'Custom Plan',
+                shortName: name || 'Custom Plan',
+                price: Number(price) || 2000,
+                formattedPrice: `Rs ${(Number(price) || 2000).toLocaleString()}`,
+                ref: `AI-${Math.floor(100 + Math.random() * 900)}`,
+                category: category || 'ai',
+                categoryLabel: (category || 'ai').toUpperCase(),
+                tag: '⚡ AI Added',
+                badge: 'Instant Key',
+                badgeIcon: 'bolt',
+                desc: desc || 'Official premium digital software subscription.',
+                longDesc: desc || 'Official licensed software subscription with private credentials and replacement warranty.',
+                durationTag: durationTag || '1-Month Access',
+                vendorName: 'Direct Wholesaler',
+                unitCost: Number(vendorCost) || 1000,
+                vendorCost: Number(vendorCost) || 1000,
+                imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80',
+                features: ['Private Credentials', 'Instant Escrow Delivery', 'Full Replacement Warranty'],
+                isActive: true,
+              };
+              onUpdateProducts([newProd, ...products]);
+              setLastDiscussedProduct({ id: newProd.id, name: newProd.name, price: newProd.price });
+              actionExecuted = {
+                type: 'ADD_PRODUCT',
+                description: `Added "${newProd.name}" (PKR ${newProd.price.toLocaleString()}) to catalog`,
+              };
+            }
+            // 6. DELETE_PRODUCT Action
+            else if (item.type === 'DELETE_PRODUCT') {
+              const { productId, productName } = item.payload || {};
+              if (productId || productName) {
+                const filtered = products.filter(
+                  (p) =>
+                    p.id !== productId &&
+                    (!productName || !p.name.toLowerCase().includes(productName.toLowerCase()))
+                );
+                onUpdateProducts(filtered);
+                setPendingConfirmation(null);
+                actionExecuted = {
+                  type: 'DELETE_PRODUCT',
+                  description: `Product permanently removed from catalog`,
+                };
               }
-              return o;
-            });
-            if (onUpdateOrders) onUpdateOrders(updatedOrders);
-            else if (updatedOrders[0]) onUpdateOrder(updatedOrders[0]);
-            actionExecuted = {
-              type: 'VERIFY_ORDER',
-              description: `Verified order ${orderRef || 'in ledger'}`,
-            };
+            }
+            // 7. UPDATE_PAYMENT_SETTINGS Action
+            else if (item.type === 'UPDATE_PAYMENT_SETTINGS') {
+              const updatedSettings = {
+                ...paymentSettings,
+                ...(item.payload || {}),
+              };
+              onUpdatePaymentSettings(updatedSettings);
+              actionExecuted = {
+                type: 'UPDATE_PAYMENT_SETTINGS',
+                description: `Payment rails & bank credentials updated`,
+              };
+            }
+            // 8. UPDATE_ORDER_STATUS / VERIFY_ORDER Action
+            else if (item.type === 'VERIFY_ORDER' || item.type === 'UPDATE_ORDER_STATUS') {
+              const { orderRef, orderId, status } = item.payload || {};
+              const targetStatus = status || 'Verified';
+              let matched = false;
+              const updatedOrders = orders.map((o) => {
+                const match = (orderId && o.id === orderId) || (orderRef && (o.refNumber.includes(orderRef) || o.transactionId.includes(orderRef)));
+                if (match || (!orderId && !orderRef && o.status === 'Awaiting Slip')) {
+                  matched = true;
+                  return { ...o, status: targetStatus as any };
+                }
+                return o;
+              });
+              if (onUpdateOrders) onUpdateOrders(updatedOrders);
+              else if (updatedOrders[0]) onUpdateOrder(updatedOrders[0]);
+              actionExecuted = {
+                type: item.type,
+                description: `Order ${orderRef || 'in ledger'} updated to ${targetStatus}`,
+              };
+            }
           }
         } catch (e) {
           console.warn('Failed to parse AI action:', e);
         }
+      }
+
+      // Check if rawReply contains deletion confirmation request
+      if (rawReply.includes('permanently delete') && rawReply.includes('Confirm')) {
+        setPendingConfirmation({ action: 'DELETE_PRODUCT' });
       }
 
       const agentMsg: Message = {
@@ -583,11 +629,11 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-headline font-bold text-base sm:text-lg text-white">
-                  Insight Autonomous Store Agent
+                  Admin AI Agent
                 </h3>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 font-mono flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Self-Training Brain
+                  Online
                 </span>
                 <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[10px] font-bold border border-amber-400/30 font-mono flex items-center gap-1">
                   <span className="material-symbols-outlined text-[12px]">verified_user</span>
@@ -595,27 +641,12 @@ export const AIOperationsAgentModal: React.FC<AIOperationsAgentModalProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-[#a4b3cf]">
-                Continuous learning engine &amp; complete website handler (Roman Urdu / English)
+                Intelligent business manager for website owner (Roman Urdu / English)
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Live Voice API Trigger */}
-            {onOpenLiveVoice && (
-              <button
-                onClick={() => {
-                  onClose();
-                  onOpenLiveVoice();
-                }}
-                title="Switch to Real-Time Voice (gemini-3.1-flash-live-preview)"
-                className="px-2.5 py-1.5 rounded-xl bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[16px] animate-pulse">graphic_eq</span>
-                <span className="hidden sm:inline">Voice Live</span>
-              </button>
-            )}
-
             {/* View Switcher Button */}
             <div className="flex items-center bg-white/10 rounded-xl p-0.5 border border-white/10">
               <button

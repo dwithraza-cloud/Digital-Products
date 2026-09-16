@@ -25,7 +25,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
   paymentSettings,
   onOpenPaymentSettings,
 }) => {
-  const settings = paymentSettings || DEFAULT_PAYMENT_SETTINGS;
+  const settings = { ...DEFAULT_PAYMENT_SETTINGS, ...(paymentSettings || {}) };
   const activeProducts = products || PRODUCTS;
 
   // Form states - starting fresh without fake attachments
@@ -749,7 +749,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                           Need Help or Instant WhatsApp Confirmation?
                         </span>
                         <span className="font-mono text-xs font-bold text-emerald-800">
-                          {settings.whatsappDisplay || '0314 5338340'}
+                          {settings?.whatsappDisplay || '0314 5338340'}
                         </span>
                       </div>
                     </div>
@@ -831,7 +831,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                         support_agent
                       </span>
                       <div className="font-bold text-xs text-[#0b1c30]">Direct WhatsApp</div>
-                      <div className="text-[10px] text-[#767586]">{settings.whatsappDisplay}</div>
+                      <div className="text-[10px] text-[#767586]">{settings?.whatsappDisplay || '0314 5338340'}</div>
                     </div>
                     <div className="p-3 rounded-2xl bg-[#f8f9ff] border border-[#e5eeff]">
                       <span className="material-symbols-outlined text-[#6063ee] text-[22px] mb-1">

@@ -23,7 +23,6 @@ interface OperationsLedgerViewProps {
   paymentSettings: PaymentSettings;
   onUpdatePaymentSettings: (newSettings: PaymentSettings) => void;
   onOpenAIAgent?: () => void;
-  onOpenLiveVoice?: () => void;
 }
 
 export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
@@ -41,7 +40,6 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
   paymentSettings,
   onUpdatePaymentSettings,
   onOpenAIAgent,
-  onOpenLiveVoice,
 }) => {
   const [adminSectionTab, setAdminSectionTab] = useState<'orders' | 'receipts' | 'products' | 'crm' | 'vendors' | 'payments'>('orders');
   const [showAIAgentModal, setShowAIAgentModal] = useState(false);
@@ -700,17 +698,6 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
               <span className="material-symbols-outlined text-[17px]">add_box</span>
               <span>+ Add Product</span>
             </button>
-
-            {onOpenLiveVoice && (
-              <button
-                onClick={onOpenLiveVoice}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-                title="Open Admin Real-Time Voice Copilot (Gemini Live API)"
-              >
-                <span className="material-symbols-outlined text-[17px] animate-pulse">graphic_eq</span>
-                <span>🎙️ Voice Copilot</span>
-              </button>
-            )}
 
             <button
               onClick={() => {

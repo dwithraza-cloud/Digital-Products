@@ -11,6 +11,7 @@ interface StorefrontViewProps {
   isAdmin?: boolean;
   onOpenAdminLogin?: () => void;
   paymentSettings?: PaymentSettings;
+  onOpenCustomerSalesAgent?: () => void;
 }
 
 export const StorefrontView: React.FC<StorefrontViewProps> = ({
@@ -21,6 +22,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
   isAdmin = false,
   onOpenAdminLogin,
   paymentSettings,
+  onOpenCustomerSalesAgent,
 }) => {
   const waClean = paymentSettings?.whatsappSupportNumber?.replace(/\D/g, '') || '923145338340';
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'ai' | 'creative' | 'streaming' | string>('all');
@@ -103,6 +105,17 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
                   <span className="material-symbols-outlined text-[20px]">help_outline</span>
                   <span>How It Works</span>
                 </a>
+
+                {onOpenCustomerSalesAgent && (
+                  <button
+                    onClick={onOpenCustomerSalesAgent}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-linear-to-r from-[#0284c7] to-[#0369a1] hover:brightness-110 text-white font-bold rounded-2xl shadow-[0_4px_14px_rgba(2,132,199,0.25)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[20px] text-[#38bdf8]">smart_toy</span>
+                    <span>Ask AI Sales Assistant</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  </button>
+                )}
               </div>
 
               {/* Trust badges */}

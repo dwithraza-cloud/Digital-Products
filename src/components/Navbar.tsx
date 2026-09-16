@@ -8,7 +8,7 @@ interface NavbarProps {
   onAdminLogout: () => void;
   onBrowseProductsClick?: () => void;
   onOpenAIAgent?: () => void;
-  onOpenLiveVoice?: () => void;
+  onOpenCustomerSalesAgent?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onAdminLogout,
   onBrowseProductsClick,
   onOpenAIAgent,
-  onOpenLiveVoice,
+  onOpenCustomerSalesAgent,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'home' | 'catalog' | 'how-it-works' | 'faq'>('home');
@@ -163,16 +163,17 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action & Admin Login / Logout */}
           <div className="flex items-center gap-2.5">
-            {/* Live Voice AI Conversation Button (Admin Exclusive) */}
-            {isAdmin && onOpenLiveVoice && (
+            {/* Customer AI Sales Assistant Button (Available for EVERY user) */}
+            {onOpenCustomerSalesAgent && (
               <button
-                onClick={onOpenLiveVoice}
-                title="Admin Live Voice Conversation (gemini-3.1-flash-live-preview)"
-                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-[0_4px_14px_rgba(70,72,212,0.25)] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                onClick={onOpenCustomerSalesAgent}
+                title="Ask AI Sales Assistant (Instant quotes & package answers in Roman Urdu, Urdu & English)"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-linear-to-r from-[#0284c7] via-[#0369a1] to-[#1e40af] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-[0_4px_14px_rgba(2,132,199,0.28)] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[17px] animate-pulse">graphic_eq</span>
-                <span>Voice Live</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                <span className="material-symbols-outlined text-[17px] text-[#38bdf8]">smart_toy</span>
+                <span className="hidden sm:inline">AI Sales Chat</span>
+                <span className="sm:hidden">AI Chat</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               </button>
             )}
 
@@ -336,22 +337,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             FAQ
           </button>
 
-          {/* Live Voice Assistant in Mobile Drawer (Admin Exclusive) */}
-          {isAdmin && onOpenLiveVoice && (
+          {/* Customer AI Sales Assistant in Mobile Drawer (All users) */}
+          {onOpenCustomerSalesAgent && (
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                onOpenLiveVoice();
+                onOpenCustomerSalesAgent();
               }}
-              className="w-full text-left px-4 py-2.5 rounded-xl font-bold text-sm bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] text-white flex items-center justify-between shadow-sm cursor-pointer"
+              className="w-full text-left px-4 py-2.5 rounded-xl font-bold text-sm bg-linear-to-r from-[#0284c7] to-[#1e40af] text-white flex items-center justify-between shadow-sm cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] animate-pulse">graphic_eq</span>
-                <span>Admin Live Voice AI</span>
+                <span className="material-symbols-outlined text-[18px] text-[#38bdf8]">smart_toy</span>
+                <span>AI Sales Assistant</span>
               </div>
               <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded font-mono flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                Live API
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Chat
               </span>
             </button>
           )}

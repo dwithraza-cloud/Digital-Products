@@ -15,12 +15,18 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
   currentSettings,
   onSaveSettings,
 }) => {
-  const [formData, setFormData] = useState<PaymentSettings>({ ...currentSettings });
+  const [formData, setFormData] = useState<PaymentSettings>({
+    ...DEFAULT_PAYMENT_SETTINGS,
+    ...(currentSettings || {}),
+  });
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
-    if (isOpen && currentSettings) {
-      setFormData({ ...currentSettings });
+    if (isOpen) {
+      setFormData({
+        ...DEFAULT_PAYMENT_SETTINGS,
+        ...(currentSettings || {}),
+      });
     }
   }, [isOpen, currentSettings]);
 

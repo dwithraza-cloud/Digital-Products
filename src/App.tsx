@@ -8,13 +8,31 @@ import { OperationsLedgerView } from './components/OperationsLedgerView';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminPaymentSettingsModal } from './components/AdminPaymentSettingsModal';
 import { AIOperationsAgentModal } from './components/AIOperationsAgentModal';
-import { LiveVoiceModal } from './components/LiveVoiceModal';
+import { CustomerSalesAgentModal, CartItem } from './components/CustomerSalesAgentModal';
 import { Footer } from './components/Footer';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<'home' | 'checkout' | 'ledger'>('home');
   const [showAIAgentModal, setShowAIAgentModal] = useState<boolean>(false);
-  const [showLiveVoiceModal, setShowLiveVoiceModal] = useState<boolean>(false);
+  const [showCustomerSalesAgent, setShowCustomerSalesAgent] = useState<boolean>(false);
+
+  // Customer cart state for AI Sales Assistant and Checkout
+  const [customerCart, setCustomerCart] = useState<CartItem[]>(() => {
+    const saved = localStorage.getItem('insight_customer_cart');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        console.error('Error loading cart:', e);
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('insight_customer_cart', JSON.stringify(customerCart));
+  }, [customerCart]);
 
   // Dynamic Products List with local persistence
   const [products, setProducts] = useState<Product[]>(() => {
@@ -70,6 +88,34 @@ export default function App() {
   const handleDeleteProduct = (productId: string) => {
     const updated = products.filter((p) => p.id !== productId);
     handleUpdateProducts(updated);
+  };
+
+  const handleAddToCart = (product: Product, quantity: number = 1) => {
+    setCustomerCart((prev) => {
+      const idx = prev.findIndex((item) => item.productId === product.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], quantity: (updated[idx].quantity || 1) + quantity };
+        return updated;
+      } else {
+        return [
+          ...prev,
+          {
+            productId: product.id,
+            name: product.shortName || product.name,
+            price: product.price,
+            quantity,
+            durationTag: product.durationTag,
+            imageUrl: product.imageUrl,
+          },
+        ];
+      }
+    });
+    setSelectedProduct(product);
+  };
+
+  const handleRemoveFromCart = (productId: string) => {
+    setCustomerCart((prev) => prev.filter((item) => item.productId !== productId));
   };
 
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -240,7 +286,7 @@ export default function App() {
         onOpenAdminLogin={() => setShowAdminLoginModal(true)}
         onAdminLogout={handleAdminLogout}
         onOpenAIAgent={isAdmin ? handleOpenAIAgent : undefined}
-        onOpenLiveVoice={isAdmin ? () => setShowLiveVoiceModal(true) : undefined}
+        onOpenCustomerSalesAgent={() => setShowCustomerSalesAgent(true)}
         onBrowseProductsClick={() => {
           if (currentTab !== 'home') {
             setCurrentTab('home');
@@ -275,6 +321,7 @@ export default function App() {
             isAdmin={isAdmin}
             onOpenAdminLogin={() => setShowAdminLoginModal(true)}
             paymentSettings={paymentSettings}
+            onOpenCustomerSalesAgent={() => setShowCustomerSalesAgent(true)}
           />
         )}
 
@@ -316,7 +363,6 @@ export default function App() {
                 paymentSettings={paymentSettings}
                 onUpdatePaymentSettings={handleUpdatePaymentSettings}
                 onOpenAIAgent={() => setShowAIAgentModal(true)}
-                onOpenLiveVoice={() => setShowLiveVoiceModal(true)}
               />
             ) : (
               <div className="max-w-md mx-auto my-20 p-8 bg-white rounded-3xl border border-[#e5eeff] text-center shadow-lg space-y-4">
@@ -366,38 +412,58 @@ export default function App() {
         onSaveSettings={handleUpdatePaymentSettings}
       />
 
-      {/* Floating Action Buttons (Admin Exclusive) */}
-      {isAdmin && (
-        <div className="fixed bottom-6 right-6 z-40 flex flex-col sm:flex-row items-end sm:items-center gap-2.5">
-          {/* Real-time Voice Live Assistant (Gemini Live API) - Admin Exclusive */}
-          <button
-            onClick={() => setShowLiveVoiceModal(true)}
-            title="Open Admin Real-Time Voice Copilot (gemini-3.1-flash-live-preview)"
-            className="group flex items-center gap-2.5 px-4 py-3 bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:scale-105 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-full shadow-[0_12px_30px_rgba(70,72,212,0.4)] transition-all border border-white/25 cursor-pointer"
-          >
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[18px] animate-pulse">graphic_eq</span>
-            </div>
-            <span>Admin Live Voice</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-          </button>
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col sm:flex-row items-end sm:items-center gap-2.5">
+        {/* Customer AI Sales Assistant Launcher (Accessible to everyone) */}
+        <button
+          onClick={() => setShowCustomerSalesAgent(true)}
+          title="Chat with AI Sales Assistant (Instant quotes & package answers in Roman Urdu, Urdu & English)"
+          className="group flex items-center gap-2.5 px-4 py-3 bg-linear-to-r from-[#0284c7] via-[#0369a1] to-[#1e40af] hover:scale-105 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-full shadow-[0_12px_30px_rgba(2,132,199,0.4)] transition-all border border-white/25 cursor-pointer"
+        >
+          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+            <span className="material-symbols-outlined text-[18px] text-[#38bdf8]">smart_toy</span>
+          </div>
+          <span>AI Sales Assistant</span>
+          {customerCart.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 text-[10px] font-extrabold">
+              {customerCart.reduce((sum, i) => sum + i.quantity, 0)}
+            </span>
+          )}
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+        </button>
 
-          {/* Floating Global AI Operations Agent Launcher (Admin Exclusive) */}
+        {/* Floating Action Buttons (Admin Exclusive) */}
+        {isAdmin && (
           <button
             onClick={handleOpenAIAgent}
-            title="Open Insight AI Operations Copilot (Admin Exclusive)"
-            className="group flex items-center gap-2.5 px-4 py-3 bg-linear-to-r from-[#0b1c30] via-[#4648d4] to-[#ea580c] hover:scale-105 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-full shadow-[0_12px_30px_rgba(70,72,212,0.35)] transition-all border border-white/25 cursor-pointer"
+            title="Open Admin AI Agent (Admin Exclusive)"
+            className="group flex items-center gap-2 px-3.5 py-3 bg-linear-to-r from-[#0b1c30] via-[#4648d4] to-[#ea580c] hover:scale-105 active:scale-95 text-white font-bold text-xs rounded-full shadow-[0_12px_30px_rgba(70,72,212,0.35)] transition-all border border-white/25 cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
             </div>
-            <span>Insight AI Agent</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="hidden sm:inline">Admin Agent</span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Global AI Operations Copilot Modal (Admin Exclusive) */}
+      {/* Customer-Facing AI Sales Assistant Modal */}
+      <CustomerSalesAgentModal
+        isOpen={showCustomerSalesAgent}
+        onClose={() => setShowCustomerSalesAgent(false)}
+        products={products}
+        paymentSettings={paymentSettings}
+        cart={customerCart}
+        onAddToCart={handleAddToCart}
+        onRemoveFromCart={handleRemoveFromCart}
+        onNavigateToCheckout={() => {
+          setShowCustomerSalesAgent(false);
+          setCurrentTab('checkout');
+        }}
+        whatsappNumber={paymentSettings.whatsappSupportNumber}
+      />
+
+      {/* Admin AI Agent Modal (Admin Exclusive) */}
       <AIOperationsAgentModal
         isOpen={showAIAgentModal}
         onClose={() => setShowAIAgentModal(false)}
@@ -418,7 +484,6 @@ export default function App() {
         onUpdateLearnedRules={handleUpdateLearnedRules}
         onNavigateToStorefront={() => setCurrentTab('home')}
         onNavigateToCheckout={() => setCurrentTab('checkout')}
-        onOpenLiveVoice={() => setShowLiveVoiceModal(true)}
         onNavigateTab={(tab) => {
           if (tab === 'receipts' || tab === 'orders' || tab === 'products' || tab === 'crm' || tab === 'vendors') {
             if (!isAdmin) {
@@ -427,40 +492,6 @@ export default function App() {
               setCurrentTab('ledger');
             }
           }
-        }}
-      />
-
-      {/* Real-time Gemini Live Voice Modal with direct store modification capabilities (Admin Exclusive) */}
-      <LiveVoiceModal
-        isOpen={showLiveVoiceModal}
-        onClose={() => setShowLiveVoiceModal(false)}
-        products={products}
-        onSaveProduct={handleSaveProduct}
-        onDeleteProduct={handleDeleteProduct}
-        onUpdateProducts={handleUpdateProducts}
-        paymentSettings={paymentSettings}
-        onUpdatePaymentSettings={handleUpdatePaymentSettings}
-        onNavigateTab={(tab, productId) => {
-          if (tab === 'home') {
-            setCurrentTab('home');
-          } else if (tab === 'checkout') {
-            if (productId) {
-              const target = products.find((p) => p.id === productId);
-              if (target) setSelectedProduct(target);
-            }
-            setCurrentTab('checkout');
-          } else if (tab === 'receipts' || tab === 'orders' || tab === 'products' || tab === 'crm' || tab === 'vendors') {
-            if (!isAdmin) {
-              setShowAdminLoginModal(true);
-            } else {
-              setCurrentTab('ledger');
-            }
-          }
-        }}
-        isAdmin={isAdmin}
-        onOpenAdminLogin={() => {
-          setShowLiveVoiceModal(false);
-          setShowAdminLoginModal(true);
         }}
       />
 
