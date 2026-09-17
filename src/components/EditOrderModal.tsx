@@ -419,10 +419,9 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
                   }
                   className="w-full px-3 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30]"
                 >
-                  <option value="Meezan Bank">Meezan Bank</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
                   <option value="Nayapay Wallet">Nayapay Wallet</option>
                   <option value="JazzCash Retail">JazzCash Retail</option>
-                  <option value="Bank Alfalah">Bank Alfalah</option>
                   <option value="Easypaisa">Easypaisa</option>
                 </select>
               </div>

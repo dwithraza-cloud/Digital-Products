@@ -266,7 +266,7 @@ export const AdminPaymentSettingsModal: React.FC<AdminPaymentSettingsModalProps>
                   value={formData.bankName}
                   onChange={(e) => handleChange('bankName', e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-[#dce9ff] bg-white text-[#0b1c30] focus:ring-2 focus:ring-[#ea580c] focus:outline-none"
-                  placeholder="e.g. Meezan Bank Ltd"
+                  placeholder="e.g. Bank Name (e.g. HBL, Alfalah, etc.)"
                 />
               </div>
 

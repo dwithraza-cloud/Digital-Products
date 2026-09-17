@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Product, PaymentSettings } from '../types';
 import { PRODUCTS } from '../data/mockData';
-import { HeroDigitalVaultMockup } from './HeroDigitalVaultMockup';
+import heroTreeImg from '../assets/images/hero_digital_tree_1789629538874.jpg';
 
 interface StorefrontViewProps {
   products?: Product[];
@@ -38,11 +38,11 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
   const faqs = [
     {
       q: 'How quickly will I receive my license after submitting payment proof?',
-      a: 'Over 92% of orders are dispatched within 5 to 15 minutes during active hours (10:00 AM to 1:00 AM PKT). Once your payment slip is automatically OCR-matched against Meezan Bank, JazzCash, or Easypaisa ledger, your credentials or official invite link arrive instantly on WhatsApp and Email.',
+      a: 'Over 92% of orders are dispatched within 30 to 60 minutes during active hours (10:00 AM to 1:00 AM PKT). Once your payment slip is automatically OCR-matched against bank transfer, JazzCash, or Easypaisa ledger, your credentials or official invite link arrive instantly on WhatsApp and Email.',
     },
     {
       q: 'Which payment rails are accepted in Pakistan?',
-      a: 'We accept direct online bank transfer to Meezan Bank Ltd (Islamic Banking verified escrow with 1-Link integration), as well as direct wallet transfers via JazzCash and Easypaisa. There are zero additional transaction fees.',
+      a: 'We accept direct online bank transfers (verified escrow with 1-Link integration), as well as direct wallet transfers via JazzCash and Easypaisa. There are zero additional transaction fees.',
     },
     {
       q: 'What if a license key or subscription has an issue?',
@@ -85,25 +85,17 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
 
               <p className="text-base sm:text-lg text-[#464554] max-w-xl leading-relaxed">
                 Get top-tier AI generators, creative suites, and 4K streaming accounts —
-                quickly, securely, and affordably. Backed by Meezan, JazzCash, and Easypaisa
+                quickly, securely, and affordably. Backed by direct bank transfer, JazzCash, and Easypaisa
                 instant verification with zero markup fraud.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <a
-                  href="#catalog"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#4648d4] hover:bg-[#6063ee] text-white font-bold rounded-2xl shadow-[0_8px_20px_rgba(70,72,212,0.28)] transition-all hover:scale-[1.01] active:scale-[0.99]"
-                >
-                  <span className="material-symbols-outlined text-[20px]">explore</span>
-                  <span>Explore Verified Products</span>
-                </a>
-
-                <a
                   href="#how-it-works"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white hover:bg-[#eff4ff] text-[#0b1c30] font-bold rounded-2xl border border-[#dce9ff] shadow-sm transition-all hover:border-[#4648d4]/40"
                 >
                   <span className="material-symbols-outlined text-[20px]">help_outline</span>
-                  <span>How It Works</span>
+                  <span>About</span>
                 </a>
 
                 {onOpenCustomerSalesAgent && (
@@ -134,29 +126,47 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
                 </div>
                 <div>
                   <div className="font-headline font-extrabold text-xl sm:text-2xl text-[#4648d4]">
-                    ~15 Min
+                    30m - 1 hr
                   </div>
                   <div className="text-xs text-[#767586] font-medium">Average Delivery</div>
                 </div>
               </div>
             </div>
 
-            {/* Right Hero: Digital Vault Mockup with 3D Spheres & Floating Badges */}
-            <div className="lg:col-span-5 relative">
-              <HeroDigitalVaultMockup
-                products={activeProducts}
-                onSelectProduct={(prod) => {
-                  onSelectProduct(prod);
-                  onNavigateToCheckout();
-                }}
-                onNavigateToCatalog={() => {
+            {/* Right Hero: Visual Showcase Image */}
+            <div className="lg:col-span-5 relative flex justify-center">
+              {/* Subtle ambient backlight glow */}
+              <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-tr from-[#4648d4]/20 via-[#38bdf8]/20 to-[#10b981]/15 rounded-[36px] blur-2xl opacity-80 pointer-events-none" />
+
+              <div
+                onClick={() => {
                   const el = document.getElementById('catalog');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                isAdmin={isAdmin}
-                onNavigateToLedger={onNavigateToLedger}
-                onOpenAdminLogin={onOpenAdminLogin}
-              />
+                className="group relative w-full max-w-[480px] bg-white rounded-[28px] sm:rounded-[32px] p-2.5 sm:p-3.5 border border-[#dce9ff] shadow-[0_20px_50px_rgba(70,72,212,0.14)] hover:shadow-[0_24px_60px_rgba(70,72,212,0.22)] transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden"
+              >
+                {/* Floating Top Badge */}
+                <div className="absolute top-4 left-4 sm:top-5 sm:left-5 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl border border-[#dce9ff] shadow-[0_4px_14px_rgba(11,28,48,0.08)] text-[11px] font-bold text-[#0b1c30]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>All-in-One Digital Hub</span>
+                </div>
+
+                {/* Floating Bottom Action Badge */}
+                <div className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5 z-10 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-[#4648d4] to-[#6063ee] text-white rounded-xl shadow-[0_6px_18px_rgba(70,72,212,0.35)] text-[11px] font-bold tracking-wide group-hover:scale-105 transition-transform">
+                  <span className="material-symbols-outlined text-[15px]">shopping_bag</span>
+                  <span>Explore Catalog</span>
+                </div>
+
+                {/* Hero Showcase Image */}
+                <div className="relative w-full aspect-square rounded-[22px] sm:rounded-[26px] overflow-hidden bg-gradient-to-b from-[#f8f9ff] to-white flex items-center justify-center">
+                  <img
+                    src={heroTreeImg}
+                    alt="Top Digital Products Ecosystem - Canva, Netflix, ChatGPT, CapCut, Prime Video & AI Tools"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-contain transform group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -329,7 +339,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
         </div>
       </section>
 
-      {/* How It Works In 3 Steps */}
+      {/* About & 3-Step Verification Section */}
       <section id="how-it-works" className="py-20 bg-white">
         <div className="max-w-[1280px] mx-auto px-5 lg:px-10">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
@@ -337,7 +347,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
               Fast Escrow Architecture
             </div>
             <h2 className="font-headline font-bold text-3xl sm:text-4xl text-[#0b1c30]">
-              How Insight Products Works in 3 Simple Steps
+              About Insight Products in 3 Simple Steps
             </h2>
             <p className="text-sm sm:text-base text-[#464554]">
               Zero guesswork. Transparent Pakistani bank transfers with automated OCR receipt
@@ -373,12 +383,12 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
                 Transfer &amp; Upload Slip
               </h3>
               <p className="text-sm text-[#464554] leading-relaxed">
-                Send the exact PKR amount directly to our Meezan Bank corporate account, JazzCash,
+                Send the exact PKR amount directly to our official bank account, JazzCash,
                 or Easypaisa. Upload your transaction screenshot on the secure checkout form.
               </p>
               <div className="text-xs font-semibold text-[#006c49] flex items-center gap-1 pt-2">
                 <span className="material-symbols-outlined text-[16px]">verified</span>
-                <span>1-Link &amp; Meezan instant match</span>
+                <span>1-Link &amp; instant bank verification</span>
               </div>
             </div>
 
@@ -396,7 +406,7 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
               </p>
               <div className="text-xs font-semibold text-[#6063ee] flex items-center gap-1 pt-2">
                 <span className="material-symbols-outlined text-[16px]">bolt</span>
-                <span>15-minute SLA delivery guarantee</span>
+                <span>30m - 1 hr SLA delivery guarantee</span>
               </div>
             </div>
           </div>
@@ -449,8 +459,8 @@ export const StorefrontView: React.FC<StorefrontViewProps> = ({
                 {'★'.repeat(5)}
               </div>
               <p className="text-sm text-[#464554] leading-relaxed italic">
-                "Bought Canva Pro and ChatGPT Plus through Meezan Bank transfer. Uploaded the
-                receipt and had the login credentials on my WhatsApp in literally 4 minutes.
+                "Bought Canva Pro and ChatGPT Plus through direct bank transfer. Uploaded the
+                receipt and had the login credentials on my WhatsApp in literally a few minutes.
                 Zero hassle."
               </p>
               <div className="pt-2 border-t border-[#eff4ff] flex items-center gap-3">

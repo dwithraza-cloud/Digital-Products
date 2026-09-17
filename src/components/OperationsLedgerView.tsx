@@ -133,7 +133,7 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
   const [newSellPrice, setNewSellPrice] = useState(1499);
   const [newVendorCost, setNewVendorCost] = useState(580);
   const [newVendor, setNewVendor] = useState('GlobalKeyHub_NG');
-  const [newPaymentRail, setNewPaymentRail] = useState<Order['paymentRail']>('Meezan Bank');
+  const [newPaymentRail, setNewPaymentRail] = useState<Order['paymentRail']>('Bank Transfer');
   const [newLicenseKey, setNewLicenseKey] = useState('');
   const [newDurationDays, setNewDurationDays] = useState(30);
 
@@ -932,13 +932,13 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
             <button
               type="button"
               onClick={() => {
-                setSearchQuery('Meezan');
+                setSearchQuery(paymentSettings.bankName || 'Bank Transfer');
                 if (adminSectionTab !== 'orders' && adminSectionTab !== 'all') setAdminSectionTab('orders');
               }}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#464554] border border-[#e5eeff] hover:border-[#4648d4] transition-all cursor-pointer"
             >
               <span>🏦</span>
-              <span>Meezan</span>
+              <span>{paymentSettings.bankName || 'Bank'}</span>
             </button>
 
             {searchQuery && (
@@ -2494,12 +2494,25 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
             </div>
 
             {viewingReceipt.img ? (
-              <div className="rounded-2xl overflow-hidden border border-[#dce9ff] max-h-[60vh] flex items-center justify-center bg-gray-50 p-1">
+              <div
+                onContextMenu={(e) => e.preventDefault()}
+                className="relative select-none rounded-2xl overflow-hidden border border-[#dce9ff] max-h-[60vh] flex items-center justify-center bg-gray-900 p-1"
+              >
                 <img
                   src={viewingReceipt.img}
                   alt={`Receipt for ${viewingReceipt.ref}`}
-                  className="max-h-[55vh] w-auto object-contain rounded-xl"
+                  draggable={false}
+                  className="max-h-[55vh] w-auto object-contain rounded-xl pointer-events-none"
                 />
+                {/* Security Anti-Tamper & Confidential Watermark Overlay */}
+                <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center bg-black/5">
+                  <span className="text-white/20 font-mono font-black text-2xl rotate-[-25deg] tracking-widest uppercase select-none">
+                    CONFIDENTIAL • INSIGHT ESCROW
+                  </span>
+                  <span className="text-white/15 font-mono text-[10px] mt-1 rotate-[-25deg]">
+                    ORDER #{viewingReceipt.ref}
+                  </span>
+                </div>
               </div>
             ) : (
               <div className="p-8 text-center bg-[#f8f9ff] rounded-2xl border border-dashed border-[#dce9ff] text-xs text-gray-500">
@@ -2692,11 +2705,11 @@ export const OperationsLedgerView: React.FC<OperationsLedgerViewProps> = ({
                     onChange={(e) => setNewPaymentRail(e.target.value as Order['paymentRail'])}
                     className="w-full px-3 py-2.5 rounded-xl border border-[#dce9ff] bg-[#f8f9ff] text-[#0b1c30]"
                   >
-                    <option>Meezan Bank</option>
+                    {paymentSettings.bankName && <option>{paymentSettings.bankName}</option>}
+                    <option>Bank Transfer</option>
                     <option>Nayapay Wallet</option>
                     <option>JazzCash Retail</option>
                     <option>Easypaisa</option>
-                    <option>Bank Alfalah</option>
                   </select>
                 </div>
               </div>

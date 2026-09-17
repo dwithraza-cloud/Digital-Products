@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Product, Order, PaymentSettings } from '../types';
 import { PRODUCTS, DEFAULT_PAYMENT_SETTINGS } from '../data/mockData';
+import { sanitizeReceiptImage } from '../utils/security';
 
 interface CheckoutViewProps {
   products?: Product[];
@@ -63,32 +64,19 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
     showToast(`${label} copied to clipboard!`);
   };
 
-  // Process image file for upload
-  const processImageFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please upload a valid image file (PNG, JPG, JPEG, WebP).');
-      return;
+  // Process image file for upload with client-side sanitization & EXIF stripping
+  const processImageFile = async (file: File) => {
+    try {
+      setUploadError(null);
+      const sanitized = await sanitizeReceiptImage(file);
+      setReceiptFileName(sanitized.sanitizedFileName);
+      setReceiptFileSize(sanitized.sanitizedFileSize);
+      setReceiptImage(sanitized.sanitizedDataUrl);
+      setReceiptAttached(true);
+      showToast(`Screenshot securely processed & verified.`);
+    } catch (err: any) {
+      setUploadError(err?.message || 'Failed to process screenshot securely. Please use a standard JPG/PNG.');
     }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size is too large. Please upload an image under 10MB.');
-      return;
-    }
-
-    setUploadError(null);
-    setReceiptFileName(file.name);
-    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-    setReceiptFileSize(`${sizeMb} MB`);
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setReceiptImage(reader.result);
-        setReceiptAttached(true);
-        showToast(`Screenshot attached: ${file.name}`);
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,12 +231,21 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                 <span className="material-symbols-outlined text-[16px]">close</span>
               </button>
             </div>
-            <div className="rounded-2xl overflow-hidden border border-[#dce9ff] max-h-[65vh] flex items-center justify-center bg-gray-50">
+            <div
+              onContextMenu={(e) => e.preventDefault()}
+              className="relative select-none rounded-2xl overflow-hidden border border-[#dce9ff] max-h-[65vh] flex items-center justify-center bg-gray-900 p-1"
+            >
               <img
                 src={viewingReceiptModal}
                 alt="Payment Slip Proof"
-                className="max-h-[60vh] w-auto object-contain"
+                draggable={false}
+                className="max-h-[60vh] w-auto object-contain pointer-events-none rounded-xl"
               />
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <span className="text-white/20 font-mono font-bold text-xl rotate-[-25deg] select-none tracking-wider uppercase">
+                  CONFIDENTIAL • VERIFIED PAYMENT
+                </span>
+              </div>
             </div>
             <div className="flex justify-end">
               <button
@@ -371,7 +368,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                       Thank You, {orderConfirmed.customerName}!
                     </h2>
                     <p className="text-xs text-[#767586]">
-                      Your order has been confirmed and registered in our live Operations CRM Ledger.
+                      Your order has been confirmed and registered in our live CRM ledger.
                     </p>
                   </div>
                 </div>
@@ -932,10 +929,9 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                       <option value="Easypaisa">Easypaisa ({settings.easypaisaNumber || settings.walletNumber || '03145338340'})</option>
                       <option value="Nayapay Wallet">Nayapay / Sadapay Wallet</option>
                       {settings.enableBankTransfer && settings.accountNumber && (
-                        <>
-                          <option value="Meezan Bank">{settings.bankName || 'Direct Bank Account'}</option>
-                          <option value="Bank Alfalah">Bank Alfalah 1-Link</option>
-                        </>
+                        <option value={settings.bankName || 'Direct Bank Account'}>
+                          {settings.bankName || 'Direct Bank Account'}
+                        </option>
                       )}
                     </select>
                   </div>
@@ -958,6 +954,16 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
                           : 'bg-red-100 text-red-800 border border-red-200 animate-pulse'
                       }`}>
                         {receiptAttached ? '✓ Slip Attached' : 'Required to Continue'}
+                      </span>
+                    </div>
+
+                    {/* End-to-End Privacy & Anti-Tamper Security Notice */}
+                    <div className="p-2.5 rounded-xl bg-[#eff4ff]/80 border border-[#dce9ff] flex items-center gap-2 text-[11px] text-[#2c3d55]">
+                      <span className="material-symbols-outlined text-[#4648d4] text-[16px] shrink-0">
+                        verified_user
+                      </span>
+                      <span>
+                        <strong>Protected Upload:</strong> EXIF metadata &amp; device GPS stripped automatically. Screenshots are securely encrypted &amp; accessible only by authorized verification staff.
                       </span>
                     </div>
 

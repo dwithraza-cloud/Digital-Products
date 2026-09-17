@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface NavbarProps {
   currentTab: 'home' | 'checkout' | 'ledger';
@@ -17,12 +17,26 @@ export const Navbar: React.FC<NavbarProps> = ({
   isAdmin,
   onOpenAdminLogin,
   onAdminLogout,
-  onBrowseProductsClick,
-  onOpenAIAgent,
-  onOpenCustomerSalesAgent,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'home' | 'catalog' | 'how-it-works' | 'faq'>('home');
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const adminDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close admin dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (adminDropdownRef.current && !adminDropdownRef.current.contains(event.target as Node)) {
+        setAdminDropdownOpen(false);
+      }
+    };
+    if (adminDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [adminDropdownOpen]);
 
   // Listen to window scroll to automatically update active blue pill as user scrolls
   useEffect(() => {
@@ -53,6 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const handleNavClick = (tab: 'home' | 'checkout' | 'ledger', anchorId?: 'catalog' | 'how-it-works' | 'faq') => {
     setCurrentTab(tab);
     setMobileMenuOpen(false);
+    setAdminDropdownOpen(false);
 
     if (tab === 'home') {
       if (anchorId) {
@@ -76,11 +91,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     <>
       <header className="fixed top-0 w-full z-40 bg-[#f8f9ff]/90 backdrop-blur-xl border-b border-[#e5eeff] shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
         <div className="h-20 max-w-[1280px] mx-auto px-5 lg:px-10 flex items-center justify-between gap-4">
-          {/* Logo & Safe Badge */}
+          {/* Logo */}
           <div className="flex items-center gap-6">
             <button
               onClick={() => handleNavClick('home')}
-              className="flex items-center gap-2.5 text-left focus:outline-none group"
+              className="flex items-center gap-2.5 text-left focus:outline-none group cursor-pointer"
             >
               <img
                 alt="Insight Products Logo"
@@ -91,22 +106,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Insight <span className="text-[#ea580c]">Products</span>
               </span>
             </button>
-
-            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 bg-[#eff4ff] border border-[#dce9ff] rounded-full">
-              <span className="material-symbols-outlined text-[#006c49] text-[18px]">
-                verified_user
-              </span>
-              <span className="text-[11px] font-bold text-[#464554] uppercase tracking-wider">
-                Safe &amp; Verified Assets
-              </span>
-            </div>
           </div>
 
-          {/* Desktop Navigation - Home, Products, How It Works, FAQ */}
+          {/* Desktop Navigation - Home, Products, About, FAQ, CRM */}
           <nav className="hidden md:flex items-center gap-1 p-1 bg-[#f0f4ff]/80 rounded-2xl border border-[#e5eeff]">
             <button
               onClick={() => handleNavClick('home')}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                 currentTab === 'home' && activeSection === 'home'
                   ? 'bg-[#4648d4] text-white shadow-sm'
                   : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
@@ -116,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => handleNavClick('home', 'catalog')}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                 currentTab === 'home' && activeSection === 'catalog'
                   ? 'bg-[#4648d4] text-white shadow-sm'
                   : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
@@ -126,17 +132,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => handleNavClick('home', 'how-it-works')}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                 currentTab === 'home' && activeSection === 'how-it-works'
                   ? 'bg-[#4648d4] text-white shadow-sm'
                   : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
               }`}
             >
-              How It Works
+              About
             </button>
             <button
               onClick={() => handleNavClick('home', 'faq')}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                 currentTab === 'home' && activeSection === 'faq'
                   ? 'bg-[#4648d4] text-white shadow-sm'
                   : 'text-[#464554] hover:text-[#0b1c30] hover:bg-[#eff4ff]'
@@ -149,107 +155,95 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isAdmin && (
               <button
                 onClick={() => handleNavClick('ledger')}
-                className={`px-3.5 py-1.5 ml-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                className={`px-3.5 py-1.5 ml-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                   currentTab === 'ledger'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">monitoring</span>
-                <span>Operations CRM</span>
+                <span>CRM</span>
               </button>
             )}
           </nav>
 
-          {/* Right Action & Admin Login / Logout */}
+          {/* Right Action: Clean Admin Controls with Dropdown & Logout */}
           <div className="flex items-center gap-2.5">
-            {/* Customer AI Sales Assistant Button (Available for EVERY user) */}
-            {onOpenCustomerSalesAgent && (
-              <button
-                onClick={onOpenCustomerSalesAgent}
-                title="Ask AI Sales Assistant (Instant quotes & package answers in Roman Urdu, Urdu & English)"
-                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-linear-to-r from-[#0284c7] via-[#0369a1] to-[#1e40af] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-[0_4px_14px_rgba(2,132,199,0.28)] transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[17px] text-[#38bdf8]">smart_toy</span>
-                <span className="hidden sm:inline">AI Sales Chat</span>
-                <span className="sm:hidden">AI Chat</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              </button>
-            )}
-
-            <button
-              onClick={() => {
-                if (currentTab !== 'home') {
-                  setCurrentTab('home');
-                }
-                setActiveSection('catalog');
-                if (onBrowseProductsClick) {
-                  onBrowseProductsClick();
-                } else {
-                  setTimeout(() => {
-                    const el = document.getElementById('catalog');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }, 60);
-                }
-              }}
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-[#4648d4] hover:bg-[#6063ee] text-white text-xs font-bold rounded-xl shadow-[0_4px_14px_rgba(70,72,212,0.28)] transition-all hover:scale-[1.01] active:scale-[0.99]"
-            >
-              <span className="material-symbols-outlined text-[16px]">shopping_bag</span>
-              <span>Browse Products</span>
-            </button>
-
-            {/* AI Copilot Button (Admin Exclusive) */}
-            {isAdmin && onOpenAIAgent && (
-              <button
-                onClick={onOpenAIAgent}
-                title="Insight AI Store Copilot (Admin Exclusive)"
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] hover:brightness-110 text-white text-xs font-bold rounded-xl shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[17px]">smart_toy</span>
-                <span className="hidden sm:inline">AI Agent</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              </button>
-            )}
-
-            {/* Admin State & Login Trigger */}
             {isAdmin ? (
-              <div className="flex items-center gap-2">
+              <div className="relative" ref={adminDropdownRef}>
                 <button
-                  onClick={() => setCurrentTab('ledger')}
-                  className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                    currentTab === 'ledger'
-                      ? 'bg-emerald-600 text-white border-emerald-700'
-                      : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                  onClick={() => setAdminDropdownOpen((prev) => !prev)}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-sm ${
+                    adminDropdownOpen || currentTab === 'ledger'
+                      ? 'bg-emerald-600 text-white border-emerald-700 shadow-emerald-200'
+                      : 'bg-emerald-50 text-emerald-900 border-emerald-200 hover:bg-emerald-100'
                   }`}
-                  title="Open Admin CRM & Ledger"
+                  title="Admin options & logout"
                 >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Admin CRM</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="material-symbols-outlined text-[16px]">shield_person</span>
+                  <span>Admin</span>
+                  <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${adminDropdownOpen ? 'rotate-180' : ''}`}>
+                    expand_more
+                  </span>
                 </button>
-                <button
-                  onClick={onAdminLogout}
-                  title="Log out of Admin"
-                  className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-colors flex items-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-[16px]">logout</span>
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
+
+                {/* Dropdown Menu when Admin is clicked */}
+                {adminDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl border border-[#e5eeff] shadow-[0_12px_32px_rgba(11,28,48,0.14)] py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-3.5 py-2 border-b border-[#eff4ff]">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Admin Mode Active
+                      </div>
+                      <div className="text-xs text-[#767586] truncate">Store Administrator</div>
+                    </div>
+
+                    <div className="p-1 space-y-0.5">
+                      <button
+                        onClick={() => {
+                          setAdminDropdownOpen(false);
+                          setCurrentTab('ledger');
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl text-left transition-colors cursor-pointer ${
+                          currentTab === 'ledger'
+                            ? 'bg-emerald-50 text-emerald-800'
+                            : 'text-[#0b1c30] hover:bg-[#f8f9ff]'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[17px] text-emerald-600">monitoring</span>
+                        <span>Open CRM &amp; Orders</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setAdminDropdownOpen(false);
+                          onAdminLogout();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl text-rose-600 hover:bg-rose-50 text-left transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[17px]">logout</span>
+                        <span>Logout from Admin</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <button
                 onClick={onOpenAdminLogin}
                 title="Admin Login - Insight Operations"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#fff7ed] hover:bg-[#ffedd5] text-[#c2410c] hover:text-[#9a3412] text-xs font-bold transition-all border border-[#fdba74] shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#fff7ed] hover:bg-[#ffedd5] text-[#c2410c] hover:text-[#9a3412] text-xs font-bold transition-all border border-[#fdba74] shadow-sm cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[17px] text-[#ea580c]">admin_panel_settings</span>
-                <span className="hidden sm:inline">Admin Login</span>
+                <span>Admin Login</span>
               </button>
             )}
 
             {/* Mobile menu trigger */}
             <button
               aria-label="Open Navigation Menu"
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0b1c30] hover:bg-[#e5eeff] transition-colors"
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-[#eff4ff] text-[#0b1c30] hover:bg-[#e5eeff] transition-colors cursor-pointer"
               onClick={() => setMobileMenuOpen(true)}
               type="button"
             >
@@ -286,7 +280,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <button
             aria-label="Close Navigation Menu"
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#eff4ff] text-[#464554] hover:text-[#0b1c30]"
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#eff4ff] text-[#464554] hover:text-[#0b1c30] cursor-pointer"
             onClick={() => setMobileMenuOpen(false)}
             type="button"
           >
@@ -294,11 +288,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Navigation list: Home, Products, How It Works, FAQ */}
+        {/* Navigation list: Home, Products, About, FAQ, CRM */}
         <nav className="flex flex-col gap-2 flex-1 mt-6">
           <button
             onClick={() => handleNavClick('home')}
-            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
               currentTab === 'home' && activeSection === 'home'
                 ? 'bg-[#4648d4] text-white font-bold shadow-sm'
                 : 'text-[#464554] hover:bg-[#eff4ff]'
@@ -308,7 +302,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => handleNavClick('home', 'catalog')}
-            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
               currentTab === 'home' && activeSection === 'catalog'
                 ? 'bg-[#4648d4] text-white font-bold shadow-sm'
                 : 'text-[#464554] hover:bg-[#eff4ff]'
@@ -318,17 +312,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => handleNavClick('home', 'how-it-works')}
-            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
               currentTab === 'home' && activeSection === 'how-it-works'
                 ? 'bg-[#4648d4] text-white font-bold shadow-sm'
                 : 'text-[#464554] hover:bg-[#eff4ff]'
             }`}
           >
-            How It Works
+            About
           </button>
           <button
             onClick={() => handleNavClick('home', 'faq')}
-            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+            className={`w-full text-left px-4 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
               currentTab === 'home' && activeSection === 'faq'
                 ? 'bg-[#4648d4] text-white font-bold shadow-sm'
                 : 'text-[#464554] hover:bg-[#eff4ff]'
@@ -337,58 +331,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             FAQ
           </button>
 
-          {/* Customer AI Sales Assistant in Mobile Drawer (All users) */}
-          {onOpenCustomerSalesAgent && (
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenCustomerSalesAgent();
-              }}
-              className="w-full text-left px-4 py-2.5 rounded-xl font-bold text-sm bg-linear-to-r from-[#0284c7] to-[#1e40af] text-white flex items-center justify-between shadow-sm cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-[#38bdf8]">smart_toy</span>
-                <span>AI Sales Assistant</span>
-              </div>
-              <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded font-mono flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live Chat
-              </span>
-            </button>
-          )}
-
-          {/* AI Copilot in Mobile Drawer (Admin Exclusive) */}
-          {isAdmin && onOpenAIAgent && (
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenAIAgent();
-              }}
-              className="w-full text-left px-4 py-2.5 rounded-xl font-bold text-sm bg-linear-to-r from-[#4648d4] via-[#6366f1] to-[#ea580c] text-white flex items-center justify-between shadow-sm cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">smart_toy</span>
-                <span>Insight AI Agent</span>
-              </div>
-              <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded font-mono flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Admin Copilot
-              </span>
-            </button>
-          )}
-
-          {/* Admin CRM Option in Mobile Drawer */}
+          {/* CRM Option in Mobile Drawer */}
           {isAdmin && (
-            <div className="pt-3 mt-3 border-t border-[#eff4ff]">
+            <div className="pt-2 mt-2 border-t border-[#eff4ff]">
               <button
                 onClick={() => handleNavClick('ledger')}
-                className={`w-full text-left px-4 py-2.5 rounded-xl font-bold text-sm flex items-center justify-between ${
+                className={`w-full text-left px-4 py-2.5 rounded-xl font-bold text-sm flex items-center justify-between cursor-pointer ${
                   currentTab === 'ledger'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-emerald-50 text-emerald-800'
                 }`}
               >
-                <span>Operations CRM &amp; Ledger</span>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">monitoring</span>
+                  <span>CRM</span>
+                </div>
                 <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded font-mono">
                   Admin
                 </span>
@@ -405,7 +362,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onAdminLogout();
                 setMobileMenuOpen(false);
               }}
-              className="w-full py-2.5 px-4 bg-rose-50 text-rose-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 px-4 bg-rose-50 text-rose-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">logout</span>
               <span>Logout from Admin</span>
@@ -416,7 +373,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
                 onOpenAdminLogin();
               }}
-              className="w-full py-2.5 px-4 bg-[#eff4ff] text-[#464554] hover:text-[#4648d4] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 border border-[#dce9ff]"
+              className="w-full py-2.5 px-4 bg-[#eff4ff] text-[#464554] hover:text-[#4648d4] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 border border-[#dce9ff] cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">lock</span>
               <span>Admin Login</span>

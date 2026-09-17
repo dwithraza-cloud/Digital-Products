@@ -48,7 +48,7 @@ export interface Order {
   sellingPrice: number;
   vendorOrigin: string;
   vendorCost: number;
-  paymentRail: 'Meezan Bank' | 'Nayapay Wallet' | 'JazzCash Retail' | 'Bank Alfalah' | 'Easypaisa';
+  paymentRail: string;
   transactionId: string;
   status: 'Verified' | 'Awaiting Slip' | 'Dispatched';
   notes?: string;

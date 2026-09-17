@@ -1,6 +1,6 @@
 {
   "name": "Insight Products",
-  "description": "Insight Products - Curated premium digital licenses, instant bank escrow verification, and automated operations CRM & ledger.",
+  "description": "Insight Products - Curated premium digital licenses, instant bank escrow verification, and automated CRM & ledger.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

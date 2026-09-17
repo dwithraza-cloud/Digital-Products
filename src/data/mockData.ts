@@ -352,8 +352,8 @@ export const CUSTOMER_DOSSIERS: Record<string, CustomerDossier> = {};
 
 export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
   enableBankTransfer: false, // Hidden until user fills in bank details and enables it
-  bankName: 'Meezan Bank Ltd',
-  bankSubtitle: 'Direct Bank Account (Currently Inactive)',
+  bankName: '',
+  bankSubtitle: 'Direct Bank Transfer',
   accountTitle: 'Insight Products',
   accountNumber: '',
   iban: '',
@@ -392,7 +392,7 @@ export const INITIAL_LEARNED_RULES: LearnedMemoryRule[] = [
     id: 'rule-payment-3',
     category: 'bank',
     title: 'Payment Verification Protocol',
-    instruction: 'Accept JazzCash, Easypaisa, and Meezan Bank transfers. Slips must clearly show TRX ID, sender phone/account, and amount matching catalog price.',
+    instruction: 'Accept JazzCash, Easypaisa, and official direct bank transfers. Slips must clearly show TRX ID, sender phone/account, and amount matching catalog price.',
     learnedAt: 'System Core Rule',
     source: 'system_default',
     active: true,

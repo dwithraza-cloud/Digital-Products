@@ -67,7 +67,7 @@ const PATTERN_DETECTORS = [
   },
   {
     category: 'bank' as const,
-    regex: /\b(meezan|jazzcash|easypaisa|nayapay|alfalah|account number|slip|screenshot|proof)\b/i,
+    regex: /\b(bank|jazzcash|easypaisa|nayapay|account number|slip|screenshot|proof)\b/i,
     title: 'Payment Slip Priority Verification',
     generateInstruction: () =>
       'Cross-check bank transaction references with uploaded customer receipt screenshots before marking orders as Verified.',

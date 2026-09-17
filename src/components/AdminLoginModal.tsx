@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { verifyAdminCredentials } from '../utils/security';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -16,32 +17,52 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTimer, setLockoutTimer] = useState<number>(0);
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (lockoutTimer > 0) {
+      setError(`Too many failed attempts. Security cooldown active (${lockoutTimer}s remaining).`);
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
-    setTimeout(() => {
-      // Secure authentication check against administrator credentials
-      const cleanEmail = email.trim().toLowerCase();
-      const cleanPass = password.trim();
-      if (
-        (cleanEmail === 'rajaraza300@gmail.com' ||
-          cleanEmail === 'graphic.designer.1@uow.edu.pk' ||
-          cleanEmail === 'admin@insightproducts.pk' ||
-          cleanEmail === 'admin') &&
-        (cleanPass === 'raza12345' || cleanPass === 'admin123')
-      ) {
-        setLoading(false);
+    try {
+      const isValid = await verifyAdminCredentials(email, password);
+      setLoading(false);
+
+      if (isValid) {
+        setFailedAttempts(0);
         onLoginSuccess();
       } else {
-        setLoading(false);
-        setError('Invalid admin credentials. Please enter a valid administrator email and password.');
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
+
+        if (nextAttempts >= 4) {
+          setLockoutTimer(30);
+          setError('Too many failed login attempts! Account locked for 30 seconds to prevent brute-force attacks.');
+          const interval = setInterval(() => {
+            setLockoutTimer((prev) => {
+              if (prev <= 1) {
+                clearInterval(interval);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        } else {
+          setError(`Invalid administrator credentials. (${4 - nextAttempts} attempts remaining before security lockout)`);
+        }
       }
-    }, 450);
+    } catch {
+      setLoading(false);
+      setError('An error occurred during authentication. Please try again.');
+    }
   };
 
   return (
@@ -156,7 +177,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               ) : (
                 <>
                   <span className="material-symbols-outlined text-[18px]">lock</span>
-                  <span>Sign In &amp; Unlock Operations CRM</span>
+                  <span>Sign In as Admin</span>
                 </>
               )}
             </button>

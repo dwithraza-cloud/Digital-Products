@@ -43,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white rounded-lg border border-[#dce9ff] text-xs font-semibold text-[#4648d4]">
                 <span className="material-symbols-outlined text-[16px]">shield</span>
-                Meezan &amp; 1-Link Escrow
+                1-Link Verified Escrow
               </span>
             </div>
           </div>
